@@ -282,45 +282,54 @@ async fn main() {
                 peer_addr.split(':').nth(1).unwrap_or("7777")
             ).parse().expect("Invalid peer address");
 
-            // Create network manager and run sync in background
-            tokio::runtime::Runtime::new().unwrap().block_on(async {
-                let mut manager = match NetworkManager::bind(&_identity, 0).await {
-                    Ok(m) => m,
+            println!("Connected as local peer");
+            println!("Dialing peer at {}...", addr);
+
+            let join_result = async {
+                let (handle, mut manager) = match NetworkManager::bind(&_identity, 0).await {
+                    Ok((h, m)) => (h, m),
                     Err(e) => {
                         eprintln!("Failed to start network: {}", e);
-                        return;
+                        return Err(e);
                     }
                 };
 
-                // Set up campaign DB for serving sync requests
                 manager.set_campaign_db(CampaignDbHandle::new(&db_path));
 
-                println!("Connected as peer {}", manager.local_peer_id());
-                println!("Dialing peer at {}...", addr);
+                tokio::spawn(async move {
+                    if let Err(e) = manager.run().await {
+                        eprintln!("Network error: {}", e);
+                    }
+                });
 
-                // Connect to peer
                 let (tx, rx) = tokio::sync::oneshot::channel();
-                manager.send_command(conclave_network::NetworkCommand::Connect { 
+                handle.send_command(conclave_network::NetworkCommand::Connect { 
                     addr: addr.clone(), 
                     response: tx 
                 }).await.unwrap();
                 
                 match rx.await {
-                    Ok(Ok(())) => println!("Connected to peer!"),
-                    Ok(Err(e)) => {
-                        eprintln!("Failed to connect: {}", e);
-                        return;
-                    }
-                    Err(_) => {
-                        eprintln!("Connection channel closed");
-                        return;
-                    }
+                    Ok(Ok(())) => println!("Dial initiated"),
+                    Ok(Err(e)) => return Err(e),
+                    Err(_) => return Err(conclave_network::NetworkError::ConnectionFailed("Connection channel closed".into())),
                 }
 
-                // Wait a bit for connection to establish
-                tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+                let mut wait_count = 0;
+                while wait_count < 20 {
+                    tokio::time::sleep(tokio::time::Duration::from_millis(250)).await;
+                    let peers = handle.connected_peers().await;
+                    if !peers.is_empty() {
+                        println!("Connected to peer!");
+                        break;
+                    }
+                    wait_count += 1;
+                }
 
-                // Create and broadcast MemberJoined event
+                let peers = handle.connected_peers().await;
+                if peers.is_empty() {
+                    return Err(conclave_network::NetworkError::ConnectionFailed("Failed to connect to peer".into()));
+                }
+
                 let identity_json: serde_json::Value = serde_json::from_reader(
                     std::fs::File::open(&id_path).unwrap()
                 ).unwrap();
@@ -330,7 +339,6 @@ async fn main() {
                 key_bytes.copy_from_slice(&identity.signing_key.to_bytes());
                 let signing_key = SigningKey::from_bytes(&key_bytes);
 
-                // Get next sequence number
                 let next_seq = local_max_seq + 1;
                 
                 let member_joined_payload = serde_json::to_value(
@@ -350,10 +358,8 @@ async fn main() {
                 );
                 joined_event.sign(&signing_key);
 
-                // Store locally
                 store_event(&conn, &joined_event).expect("Failed to store MemberJoined event");
                 
-                // Add member to members table
                 conclave_storage::add_member(
                     &conn, 
                     campaign_uuid, 
@@ -363,13 +369,11 @@ async fn main() {
                 
                 println!("Broadcasting MemberJoined event (seq {})", next_seq);
 
-                // Broadcast the event
-                let _ = manager.send_command(conclave_network::NetworkCommand::Broadcast {
+                let _ = handle.send_command(conclave_network::NetworkCommand::Broadcast {
                     event: joined_event,
                     response: tokio::sync::oneshot::channel().0,
                 }).await;
 
-                // Load campaign-specific plugins
                 let plugin_dir = data_dir.join("plugins").join(&campaign_id);
                 if plugin_dir.exists() {
                     println!("Loading campaign plugins from {:?}", plugin_dir);
@@ -394,7 +398,6 @@ async fn main() {
                                             .unwrap_or("unknown")
                                     );
 
-                                    // Broadcast PluginLoaded event
                                     let mut plugin_seq = next_seq;
                                     plugin_seq += 1;
 
@@ -420,7 +423,7 @@ async fn main() {
 
                                     store_event(&conn, &plugin_event).expect("Failed to store PluginLoaded event");
                                     
-                                    let _ = manager.send_command(conclave_network::NetworkCommand::Broadcast {
+                                    let _ = handle.send_command(conclave_network::NetworkCommand::Broadcast {
                                         event: plugin_event,
                                         response: tokio::sync::oneshot::channel().0,
                                     }).await;
@@ -431,22 +434,19 @@ async fn main() {
                     }
                 }
 
-                // Request events from peer
                 println!("Requesting events from sequence {}...", local_max_seq + 1);
                 
-                let peers = manager.connected_peers();
+                let peers = handle.connected_peers().await;
                 if peers.is_empty() {
-                    eprintln!("No connected peers to sync from");
-                    return;
+                    return Err(conclave_network::NetworkError::ConnectionFailed("No connected peers to sync from".into()));
                 }
 
                 let target_peer = peers[0];
-                match manager.sync_campaign_events(campaign_uuid, local_max_seq + 1, target_peer).await {
+                match handle.sync_campaign_events(campaign_uuid, local_max_seq + 1, target_peer).await {
                     Ok(events) => {
                         println!("Received {} events from peer", events.len());
                         
                         for event in &events {
-                            // Verify signature before storing
                             if !event.verify() {
                                 eprintln!("Warning: Failed to verify event {}", event.id);
                                 continue;
@@ -461,15 +461,21 @@ async fn main() {
                     }
                     Err(e) => {
                         eprintln!("Failed to sync events: {}", e);
+                        return Err(e);
                     }
                 }
 
-                // Disconnect and shutdown
-                let _ = manager.send_command(conclave_network::NetworkCommand::Disconnect { 
+                let _ = handle.send_command(conclave_network::NetworkCommand::Disconnect { 
                     peer_id: target_peer, 
                     response: tokio::sync::oneshot::channel().0 
                 }).await;
-            });
+                
+                Ok::<_, conclave_network::NetworkError>(())
+            }.await;
+
+            if let Err(e) = join_result {
+                eprintln!("Join campaign failed: {}", e);
+            }
         }
 
         Commands::ListCampaigns => {
@@ -670,13 +676,15 @@ async fn main() {
             println!("\nPress Ctrl+C to stop listening...\n");
 
             // Create and run NetworkManager
-            let mut manager = match NetworkManager::bind(&identity, cli.port).await {
-                Ok(m) => m,
+            let (handle, mut manager) = match NetworkManager::bind(&identity, cli.port).await {
+                Ok((h, m)) => (h, m),
                 Err(e) => {
                     eprintln!("Failed to start network: {}", e);
                     return;
                 }
             };
+
+            println!("Connected as peer {}", handle.local_peer_id());
 
             // Set up event callback to process incoming events
             let data_dir_clone = data_dir.clone();
@@ -785,6 +793,7 @@ async fn main() {
                 }
             });
 
+            println!("Use 'conclave status' to check network state");
             tokio::signal::ctrl_c().await.unwrap();
             println!("\nShutting down...");
         }
@@ -971,51 +980,57 @@ async fn main() {
                 peer_addr.split(':').nth(1).unwrap_or("7777")
             ).parse().expect("Invalid peer address");
 
-            // Create network manager and make RPC call
-            tokio::runtime::Runtime::new().unwrap().block_on(async {
-                let manager = match NetworkManager::bind(&identity, 0).await {
-                    Ok(m) => m,
+            println!("Querying peer {} for campaign {} members...", peer_addr, campaign_id);
+
+            let rpc_result = async {
+                let (handle, manager) = match NetworkManager::bind(&identity, 0).await {
+                    Ok((h, m)) => (h, m),
                     Err(e) => {
                         eprintln!("Failed to start network: {}", e);
-                        return;
+                        return Err(e);
                     }
                 };
 
-                println!("Connected as peer {}", manager.local_peer_id());
+                println!("Connected as peer {}", handle.local_peer_id());
                 println!("Dialing peer at {}...", addr);
 
-                // Connect to peer
+                tokio::spawn(async move {
+                    if let Err(e) = manager.run().await {
+                        eprintln!("Network error: {}", e);
+                    }
+                });
+
                 let (tx, rx) = tokio::sync::oneshot::channel();
-                manager.send_command(NetworkCommand::Connect { 
+                handle.send_command(NetworkCommand::Connect { 
                     addr: addr.clone(), 
                     response: tx 
                 }).await.unwrap();
                 
                 match rx.await {
-                    Ok(Ok(())) => println!("Connected to peer!"),
-                    Ok(Err(e)) => {
-                        eprintln!("Failed to connect: {}", e);
-                        return;
-                    }
-                    Err(_) => {
-                        eprintln!("Connection channel closed");
-                        return;
-                    }
+                    Ok(Ok(())) => println!("Dial initiated"),
+                    Ok(Err(e)) => return Err(e),
+                    Err(_) => return Err(conclave_network::NetworkError::ConnectionFailed("Connection channel closed".into())),
                 }
 
-                // Wait for connection to establish
-                tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+                let mut wait_count = 0;
+                while wait_count < 20 {
+                    tokio::time::sleep(tokio::time::Duration::from_millis(250)).await;
+                    let peers = handle.connected_peers().await;
+                    if !peers.is_empty() {
+                        println!("Connected to peer!");
+                        break;
+                    }
+                    wait_count += 1;
+                }
 
-                let peers = manager.connected_peers();
+                let peers = handle.connected_peers().await;
                 if peers.is_empty() {
-                    eprintln!("No connected peers");
-                    return;
+                    return Err(conclave_network::NetworkError::ConnectionFailed("No connected peers".into()));
                 }
 
                 let target_peer = peers[0];
                 
-                // Make RPC call to get members
-                match manager.rpc_call(
+                match handle.rpc_call(
                     target_peer, 
                     "get_members".to_string(), 
                     serde_json::json!({"campaign_id": campaign_id})
@@ -1037,15 +1052,21 @@ async fn main() {
                     }
                     Err(e) => {
                         eprintln!("RPC call failed: {}", e);
+                        return Err(e);
                     }
                 }
 
-                // Disconnect and shutdown
-                let _ = manager.send_command(NetworkCommand::Disconnect { 
+                let _ = handle.send_command(NetworkCommand::Disconnect { 
                     peer_id: target_peer, 
                     response: tokio::sync::oneshot::channel().0 
                 }).await;
-            });
+                
+                Ok::<_, conclave_network::NetworkError>(())
+            }.await;
+
+            if let Err(e) = rpc_result {
+                eprintln!("RPC failed: {}", e);
+            }
         }
 
         Commands::RpcInfo { campaign_id, peer_addr } => {
@@ -1069,51 +1090,57 @@ async fn main() {
                 peer_addr.split(':').nth(1).unwrap_or("7777")
             ).parse().expect("Invalid peer address");
 
-            // Create network manager and make RPC call
-            tokio::runtime::Runtime::new().unwrap().block_on(async {
-                let manager = match NetworkManager::bind(&identity, 0).await {
-                    Ok(m) => m,
+            println!("Querying peer {} for campaign {} info...", peer_addr, campaign_id);
+
+            let rpc_result = async {
+                let (handle, manager) = match NetworkManager::bind(&identity, 0).await {
+                    Ok((h, m)) => (h, m),
                     Err(e) => {
                         eprintln!("Failed to start network: {}", e);
-                        return;
+                        return Err(e);
                     }
                 };
 
-                println!("Connected as peer {}", manager.local_peer_id());
+                println!("Connected as peer {}", handle.local_peer_id());
                 println!("Dialing peer at {}...", addr);
 
-                // Connect to peer
+                tokio::spawn(async move {
+                    if let Err(e) = manager.run().await {
+                        eprintln!("Network error: {}", e);
+                    }
+                });
+
                 let (tx, rx) = tokio::sync::oneshot::channel();
-                manager.send_command(NetworkCommand::Connect { 
+                handle.send_command(NetworkCommand::Connect { 
                     addr: addr.clone(), 
                     response: tx 
                 }).await.unwrap();
                 
                 match rx.await {
-                    Ok(Ok(())) => println!("Connected to peer!"),
-                    Ok(Err(e)) => {
-                        eprintln!("Failed to connect: {}", e);
-                        return;
-                    }
-                    Err(_) => {
-                        eprintln!("Connection channel closed");
-                        return;
-                    }
+                    Ok(Ok(())) => println!("Dial initiated"),
+                    Ok(Err(e)) => return Err(e),
+                    Err(_) => return Err(conclave_network::NetworkError::ConnectionFailed("Connection channel closed".into())),
                 }
 
-                // Wait for connection to establish
-                tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+                let mut wait_count = 0;
+                while wait_count < 20 {
+                    tokio::time::sleep(tokio::time::Duration::from_millis(250)).await;
+                    let peers = handle.connected_peers().await;
+                    if !peers.is_empty() {
+                        println!("Connected to peer!");
+                        break;
+                    }
+                    wait_count += 1;
+                }
 
-                let peers = manager.connected_peers();
+                let peers = handle.connected_peers().await;
                 if peers.is_empty() {
-                    eprintln!("No connected peers");
-                    return;
+                    return Err(conclave_network::NetworkError::ConnectionFailed("No connected peers".into()));
                 }
 
                 let target_peer = peers[0];
                 
-                // Make RPC call to get campaign info
-                match manager.rpc_call(
+                match handle.rpc_call(
                     target_peer, 
                     "get_campaign_info".to_string(), 
                     serde_json::json!({"campaign_id": campaign_id})
@@ -1131,15 +1158,21 @@ async fn main() {
                     }
                     Err(e) => {
                         eprintln!("RPC call failed: {}", e);
+                        return Err(e);
                     }
                 }
 
-                // Disconnect and shutdown
-                let _ = manager.send_command(NetworkCommand::Disconnect { 
+                let _ = handle.send_command(NetworkCommand::Disconnect { 
                     peer_id: target_peer, 
                     response: tokio::sync::oneshot::channel().0 
                 }).await;
-            });
+                
+                Ok::<_, conclave_network::NetworkError>(())
+            }.await;
+
+            if let Err(e) = rpc_result {
+                eprintln!("RPC failed: {}", e);
+            }
         }
 
         Commands::Status => {

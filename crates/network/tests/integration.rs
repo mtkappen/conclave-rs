@@ -11,22 +11,22 @@ async fn test_two_managers_bind() {
     let identity1 = Identity::generate("Peer 1".to_string()).unwrap();
     let identity2 = Identity::generate("Peer 2".to_string()).unwrap();
 
-    let manager1 = NetworkManager::bind(&identity1, 0).await.unwrap();
-    let manager2 = NetworkManager::bind(&identity2, 0).await.unwrap();
+    let (handle1, _manager1) = NetworkManager::bind(&identity1, 0).await.unwrap();
+    let (handle2, _manager2) = NetworkManager::bind(&identity2, 0).await.unwrap();
 
     // Both managers should have valid peer IDs
-    assert!(!manager1.local_peer_id().to_string().is_empty());
-    assert!(!manager2.local_peer_id().to_string().is_empty());
+    assert!(!handle1.local_peer_id().to_string().is_empty());
+    assert!(!handle2.local_peer_id().to_string().is_empty());
 
     // Peer IDs should be different
-    assert_ne!(manager1.local_peer_id(), manager2.local_peer_id());
+    assert_ne!(handle1.local_peer_id(), handle2.local_peer_id());
 }
 
 /// Test that we can get listening addresses from a manager
 #[tokio::test]
 async fn test_get_listening_addresses() {
     let identity = Identity::generate("Test".to_string()).unwrap();
-    let manager = NetworkManager::bind(&identity, 0).await.unwrap();
+    let (_handle, manager) = NetworkManager::bind(&identity, 0).await.unwrap();
 
     // Get listening addresses via public method
     let _addrs = manager.listening_addresses();
@@ -40,8 +40,8 @@ async fn test_mdns_discovery() {
     let identity1 = Identity::generate("Peer 1".to_string()).unwrap();
     let identity2 = Identity::generate("Peer 2".to_string()).unwrap();
 
-    let _manager1 = NetworkManager::bind(&identity1, 0).await.unwrap();
-    let _manager2 = NetworkManager::bind(&identity2, 0).await.unwrap();
+    let (_handle1, _manager1) = NetworkManager::bind(&identity1, 0).await.unwrap();
+    let (_handle2, _manager2) = NetworkManager::bind(&identity2, 0).await.unwrap();
 
     // Wait a bit for mDNS discovery
     tokio::time::sleep(Duration::from_secs(2)).await;
@@ -57,8 +57,8 @@ async fn test_manual_connect() {
     let identity2 = Identity::generate("Peer 2".to_string()).unwrap();
 
     // Bind both managers
-    let _manager1 = NetworkManager::bind(&identity1, 0).await.unwrap();
-    let manager2 = NetworkManager::bind(&identity2, 0).await.unwrap();
+    let (_handle1, _manager1) = NetworkManager::bind(&identity1, 0).await.unwrap();
+    let (_handle2, manager2) = NetworkManager::bind(&identity2, 0).await.unwrap();
 
     // Get manager2's listening address
     let addrs = manager2.listening_addresses();
@@ -82,11 +82,10 @@ async fn test_manual_connect() {
 #[tokio::test]
 async fn test_event_broadcast() {
     let identity1 = Identity::generate("Peer 1 (DM)".to_string()).unwrap();
-    let identity2 = Identity::generate("Peer 2 (Player)".to_string()).unwrap();
+    let _identity2 = Identity::generate("Peer 2 (Player)".to_string()).unwrap();
 
     // Bind both managers on different ports
-    let manager1 = NetworkManager::bind(&identity1, 0).await.unwrap();
-    let _manager2 = NetworkManager::bind(&identity2, 0).await.unwrap();
+    let (_handle1, manager1) = NetworkManager::bind(&identity1, 0).await.unwrap();
 
     // Verify we can construct a signed event that would be broadcast
     let campaign_id = uuid::Uuid::new_v4();
@@ -257,8 +256,8 @@ async fn test_event_sync_request_response() {
     assert_eq!(max_seq, 3);
 
     // Bind both network managers
-    let mut manager1 = NetworkManager::bind(&identity1, 0).await.unwrap();
-    let manager2 = NetworkManager::bind(&identity2, 0).await.unwrap();
+    let (_handle1, mut manager1) = NetworkManager::bind(&identity1, 0).await.unwrap();
+    let (handle2, _manager2) = NetworkManager::bind(&identity2, 0).await.unwrap();
 
     // Set up campaign DB for manager1 to serve sync requests
     use conclave_network::CampaignDbHandle;
@@ -275,7 +274,7 @@ async fn test_event_sync_request_response() {
 
         // Connect manager2 to manager1
         let (tx, rx) = tokio::sync::oneshot::channel();
-        manager2.send_command(NetworkCommand::Connect { 
+        handle2.send_command(NetworkCommand::Connect { 
             addr: addr.clone(), 
             response: tx 
         }).await.unwrap();
@@ -286,8 +285,8 @@ async fn test_event_sync_request_response() {
         tokio::time::sleep(Duration::from_secs(1)).await;
 
         // Request events from manager1 (starting from sequence 1)
-        let target_peer = manager2.connected_peers()[0];
-        let sync_result = manager2.sync_campaign_events(campaign_id, 1, target_peer).await;
+        let target_peer = handle2.connected_peers().await[0];
+        let sync_result = handle2.sync_campaign_events(campaign_id, 1, target_peer).await;
         
         // Should receive the 3 events we stored
         match sync_result {

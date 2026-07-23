@@ -12,7 +12,7 @@ use libp2p::{identify, mdns, ping, Multiaddr, PeerId};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
-use tokio::sync::{mpsc, oneshot};
+use tokio::sync::{mpsc, oneshot, Mutex};
 use tracing::{debug, error, info, warn};
 use uuid::Uuid;
 
@@ -227,6 +227,64 @@ impl PeerHandle {
     }
 }
 
+pub struct NetworkHandle {
+    command_tx: mpsc::Sender<NetworkCommand>,
+    local_peer_id: PeerId,
+    connected_peers: Arc<Mutex<HashSet<PeerId>>>,
+}
+
+impl NetworkHandle {
+    pub fn local_peer_id(&self) -> PeerId {
+        self.local_peer_id
+    }
+
+    pub async fn connected_peers(&self) -> Vec<PeerId> {
+        let peers = self.connected_peers.lock().await;
+        peers.iter().copied().collect()
+    }
+
+    pub async fn send_command(&self, cmd: NetworkCommand) -> NetResult<()> {
+        self.command_tx.send(cmd).await.map_err(|_| NetworkError::ChannelClosed)?;
+        Ok(())
+    }
+
+    pub async fn rpc_call(
+        &self,
+        peer_id: PeerId,
+        method: String,
+        params: serde_json::Value,
+    ) -> NetResult<serde_json::Value> {
+        let (tx, rx) = oneshot::channel();
+        
+        self.command_tx.send(NetworkCommand::RpcCall {
+            peer_id,
+            method,
+            params,
+            response: tx,
+        }).await.map_err(|_| NetworkError::ChannelClosed)?;
+        
+        rx.await.map_err(|_| NetworkError::ChannelClosed)?
+    }
+
+    pub async fn sync_campaign_events(
+        &self,
+        campaign_id: CampaignId,
+        from_sequence: u64,
+        to_peer: PeerId,
+    ) -> NetResult<Vec<SignedEvent>> {
+        let (tx, rx) = oneshot::channel();
+        
+        self.command_tx.send(NetworkCommand::SyncCampaignEvents {
+            campaign_id,
+            from_sequence,
+            to_peer,
+            response: tx,
+        }).await.map_err(|_| NetworkError::ChannelClosed)?;
+        
+        rx.await.map_err(|_| NetworkError::ChannelClosed)?
+    }
+}
+
 /// Wrapper around libp2p swarm for peer management
 pub struct NetworkManager {
     swarm: libp2p::Swarm<ConclaveBehaviour>,
@@ -238,11 +296,13 @@ pub struct NetworkManager {
     pending_rpc_requests: HashMap<u64, PendingRpcRequest>,
     campaign_db: Option<CampaignDbHandle>,
     event_callback: Option<EventCallback>,
+    connected_peers_shared: Arc<Mutex<HashSet<PeerId>>>,
 }
 
 impl NetworkManager {
     /// Create and bind a new network manager from an identity
-    pub async fn bind(identity: &Identity, port: u16) -> NetResult<Self> {
+    /// Returns a handle for sending commands and the manager to be spawned
+    pub async fn bind(identity: &Identity, port: u16) -> NetResult<(NetworkHandle, Self)> {
         // Convert conclave Identity to libp2p Keypair
         let libp2p_keypair = convert_to_libp2p_keypair(identity)?;
         let local_peer_id = PeerId::from_public_key(&libp2p_keypair.public());
@@ -293,8 +353,15 @@ impl NetworkManager {
         info!("Listening on QUIC: {}", quic_addr);
 
         let (command_tx, command_rx) = mpsc::channel(100);
+        let connected_peers_shared = Arc::new(Mutex::new(HashSet::new()));
 
-        Ok(NetworkManager {
+        let handle = NetworkHandle {
+            command_tx: command_tx.clone(),
+            local_peer_id,
+            connected_peers: connected_peers_shared.clone(),
+        };
+
+        Ok((handle, NetworkManager {
             swarm,
             command_tx,
             command_rx,
@@ -304,26 +371,8 @@ impl NetworkManager {
             pending_rpc_requests: HashMap::new(),
             campaign_db: None,
             event_callback: None,
-        })
-    }
-
-    /// Make an RPC call to a peer
-    pub async fn rpc_call(
-        &self,
-        peer_id: PeerId,
-        method: String,
-        params: serde_json::Value,
-    ) -> NetResult<serde_json::Value> {
-        let (tx, rx) = oneshot::channel();
-        
-        self.command_tx.send(NetworkCommand::RpcCall {
-            peer_id,
-            method,
-            params,
-            response: tx,
-        }).await.map_err(|_| NetworkError::ChannelClosed)?;
-        
-        rx.await.map_err(|_| NetworkError::ChannelClosed)?
+            connected_peers_shared,
+        }))
     }
 
     /// Set callback for incoming events
@@ -463,10 +512,12 @@ impl NetworkManager {
             SwarmEvent::ConnectionEstablished { peer_id, .. } => {
                 info!("Connected to peer: {}", peer_id);
                 self.connected_peers.insert(peer_id);
+                let _ = self.connected_peers_shared.blocking_lock().insert(peer_id);
             }
             SwarmEvent::ConnectionClosed { peer_id, .. } => {
                 info!("Disconnected from peer: {}", peer_id);
                 self.connected_peers.remove(&peer_id);
+                let _ = self.connected_peers_shared.blocking_lock().remove(&peer_id);
             }
             SwarmEvent::Behaviour(ConclaveBehaviourEvent::Mdns(mdns::Event::Discovered(list))) => {
                 for (peer_id, _multiaddr) in list {
@@ -689,11 +740,6 @@ impl NetworkManager {
         self.local_peer_id
     }
 
-    /// Get connected peers
-    pub fn connected_peers(&self) -> Vec<PeerId> {
-        self.connected_peers.iter().copied().collect()
-    }
-
     /// Get listening addresses
     pub fn listening_addresses(&self) -> Vec<Multiaddr> {
         self.swarm.listeners().cloned().collect()
@@ -750,8 +796,8 @@ mod tests {
     #[tokio::test]
     async fn test_local_peer_id() {
         let identity = Identity::generate("Test User".to_string()).unwrap();
-        let manager = NetworkManager::bind(&identity, 0).await.unwrap();
+        let (handle, _manager) = NetworkManager::bind(&identity, 0).await.unwrap();
         // Just verify we have a valid peer ID (the exact conversion is tested in convert_to_libp2p_keypair)
-        assert!(!manager.local_peer_id().to_string().is_empty());
+        assert!(!handle.local_peer_id().to_string().is_empty());
     }
 }

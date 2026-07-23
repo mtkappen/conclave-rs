@@ -693,15 +693,12 @@ async fn main() {
                         
                         // Handle MemberJoined events to update members table
                         if event.event_type == "MemberJoined" {
-                            if let Some(player_id) = event.payload.get("payload")
-                                .and_then(|p| p.get("player_id"))
+                            if let Some(player_id) = event.payload.get("player_id")
                                 .and_then(|p| p.as_str()) 
                             {
-                                if let Some(role_str) = event.payload.get("payload")
-                                    .and_then(|p| p.get("role"))
+                                if let Some(role_str) = event.payload.get("role")
                                     .and_then(|r| r.as_str())
                                 {
-                                    let role = format!("\"{}\"", role_str);
                                     conn.execute(
                                         "INSERT OR REPLACE INTO members (campaign_id, player_id, role, joined_at) VALUES (?1, ?2, ?3, ?4)",
                                         rusqlite::params![event.campaign_id.to_string(), player_id, role_str, chrono::Utc::now().timestamp()],
@@ -714,8 +711,8 @@ async fn main() {
                         // Handle DmTransferred events to update roles
                         if event.event_type == "DmTransferred" {
                             if let (Some(from), Some(to)) = (
-                                event.payload.get("payload").and_then(|p| p.get("from")).and_then(|p| p.as_str()),
-                                event.payload.get("payload").and_then(|p| p.get("to")).and_then(|p| p.as_str())
+                                event.payload.get("from").and_then(|p| p.as_str()),
+                                event.payload.get("to").and_then(|p| p.as_str())
                             ) {
                                 conn.execute(
                                     "UPDATE members SET role = ?1 WHERE campaign_id = ?2 AND player_id = ?3",
@@ -734,9 +731,9 @@ async fn main() {
                         // Handle DiceRolled events for display
                         if event.event_type == "DiceRolled" {
                             if let (Some(actor), Some(expr), Some(result)) = (
-                                event.payload.get("payload").and_then(|p| p.get("actor")).and_then(|p| p.as_str()),
-                                event.payload.get("payload").and_then(|p| p.get("expression")).and_then(|p| p.as_str()),
-                                event.payload.get("payload").and_then(|p| p.get("result")).and_then(|p| p.as_i64())
+                                event.payload.get("actor").and_then(|p| p.as_str()),
+                                event.payload.get("expression").and_then(|p| p.as_str()),
+                                event.payload.get("result").and_then(|p| p.as_i64())
                             ) {
                                 println!("{} rolled {} = {}", &actor[..8], expr, result);
                             }
@@ -745,8 +742,8 @@ async fn main() {
                         // Handle ChatMessage events for display
                         if event.event_type == "ChatMessage" {
                             if let (Some(author), Some(content)) = (
-                                event.payload.get("payload").and_then(|p| p.get("author")).and_then(|p| p.as_str()),
-                                event.payload.get("payload").and_then(|p| p.get("content")).and_then(|p| p.as_str())
+                                event.payload.get("author").and_then(|p| p.as_str()),
+                                event.payload.get("content").and_then(|p| p.as_str())
                             ) {
                                 println!("{}: {}", &author[..8], content);
                             }

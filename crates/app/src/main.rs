@@ -449,7 +449,29 @@ async fn main() {
                 let entry = entry.unwrap();
                 let name = entry.file_name().into_string().unwrap();
                 if name.ends_with(".db") {
-                    println!("  - {}", &name[..name.len()-3]); // Remove .db extension
+                    let campaign_id = &name[..name.len()-3];
+                    
+                    // Try to get campaign info from database
+                    let db_path = campaigns_dir.join(&name);
+                    let conn = match open_campaign_db(&db_path) {
+                        Ok(c) => c,
+                        Err(_) => {
+                            println!("  - {} (corrupted)", campaign_id);
+                            continue;
+                        }
+                    };
+                    
+                    let campaign_info: Option<(String, String)> = conn.query_row(
+                        "SELECT name, dm_id FROM campaigns WHERE id = ?1",
+                        rusqlite::params![campaign_id],
+                        |row| Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
+                    ).ok();
+                    
+                    if let Some((cam_name, dm_id)) = campaign_info {
+                        println!("  - {} (name: {}, DM: {}...)", campaign_id, cam_name, &dm_id[..8]);
+                    } else {
+                        println!("  - {}", campaign_id);
+                    }
                 }
             }
         }

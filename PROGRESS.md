@@ -1,7 +1,8 @@
 # Conclave-rs Project Progress Report
 
 **Generated:** 2026-07-23  
-**Status:** Active Development - MVP Phase
+**Last Updated:** 2026-07-23  
+**Status:** Active Development - Network Layer Complete, CLI Integration Phase
 
 ---
 
@@ -103,17 +104,42 @@ enum Event {
 - C ABI for cross-language compatibility
 - Basic RPC method routing
 
-### ⚠️ In Progress
+#### 7. Network Layer (`crates/network`) - **COMPLETE** ✅
+- libp2p Swarm with TCP/QUIC transports
+- mDNS peer discovery for LAN
+- Identity integration (Ed25519 → PeerID)
+- Event broadcast protocol (`/conclave/event/1.0.0`)
+- Campaign event sync request/response
+- CampaignDbHandle for serving incoming sync requests
+- RPC system with `get_members`, `get_max_sequence`, `get_campaign_info` methods
+- 9 passing integration tests
 
-#### Network Layer (`crates/network`)
-**Current Status:** Rewriting from QUIC (quinn) to libp2p framework
-**Why the switch:**
-- Built-in NAT traversal vs custom implementation
-- Built-in relay protocol maps directly to node system
-- Peer discovery via DHT + mDNS out of the box
-- Abstracts away QUIC API complexity and version issues
+#### 8. CLI Integration (`crates/app`) - **COMPLETE** ✅
+**Commands Implemented:**
+- `init <name>` - Generate identity + show seed phrase
+- `identity` - Display current identity info  
+- `new-campaign <name> [--rule-set]` - Create new campaign, broadcasts CampaignCreated event
+- `list-campaigns` - Show all campaigns with metadata (name, DM ID)
+- `join-campaign <campaign_id> <peer_addr>` - Full peer connect + event sync + MemberJoined broadcast + plugin loading
+- `peers` - List connected peers
+- `connect <addr>` - Manual peer connection
+- `listen --port 7777` - Start network listener with event callback processing
+- `chat <campaign> <message>` - Send chat message (local storage)
+- `roll <expression> [--campaign]` - Roll dice, record in campaign if specified
+- `members <campaign_id>` - List campaign members with roles
+- `leave-campaign <campaign_id>` - Broadcast MemberLeft event
+- `transfer-dm <campaign_id> <target_player_id>` - Transfer DM authority
+- `rpc-members <campaign_id> <peer_addr>` - Query remote peer for members via RPC
+- `rpc-info <campaign_id> <peer_addr>` - Query remote peer for campaign metadata via RPC
+- `load-plugin <campaign_id> <path>` - Load plugin with campaign context
+- `unload-plugin <name>` - Unload loaded plugin
+- `list-plugins` - Show all loaded plugins
+- `status` - Comprehensive system state (identity, campaigns, plugins, network)
 
-**MVP Approach:** Start with direct connections only (TCP/QUIC transports), enable relays later when deploying public nodes - same codebase either way.
+**Event Callback System:**
+- Automatic member table updates for MemberJoined/MemberLeft events
+- DmTransferred role updates
+- Chat/Dice event display in listen mode
 
 ### ❌ Not Started
 
@@ -131,20 +157,35 @@ enum Event {
 
 ## Test Coverage
 
-### Passing Tests (6 total)
+### Passing Tests (21 total)
+
+**Identity & Protocol:**
 1. **Identity Generation** - Key pair creation and seed phrase derivation
-2. **Seed Phrase Recovery** - Import from mnemonic works correctly
+2. **Seed Phrase Recovery** - Import from mnemonic works correctly  
 3. **Event Serialization** - All event types serialize/deserialize properly
 4. **Campaign Creation** - SQLite database initialized with correct schema
 5. **Plugin Manifest Parsing** - TOML manifests load with version validation
 6. **Sync Message Protocol** - Handshake and event transfer messages work
+7. **Sign/Verify Event Cycle** - Ed25519 signatures on events work correctly
+8. **Tamper Detection** - Modified events fail signature verification
 
-### Missing Test Coverage
-- P2P connection between two peers (blocked by network layer rewrite)
-- Event synchronization across libp2p streams
-- Plugin RPC call routing end-to-end
-- Cross-platform compatibility (Linux ↔ macOS)
-- Node relay functionality (Phase 3+)
+**Network Layer:**
+9-17. **Integration Tests (9 tests)**:
+   - Peer binding and address discovery
+   - mDNS peer discovery
+   - Manual peer connection
+   - Event broadcast end-to-end
+   - Campaign event sync request/response
+   - MemberJoined event propagation
+   - MemberLeft event propagation
+   - Network command handling
+   - Callback processing
+
+**Storage:**
+18-20. **Database Operations**: Event storage, retrieval, sequence tracking
+
+**RPC System:**
+21. **Campaign Info Query** - get_campaign_info RPC method works
 
 ---
 
@@ -210,19 +251,20 @@ Node relay      ❌ Not implemented (Phase 3+)
 ## Next Milestones
 
 ### MVP Definition of Done
-- [ ] Two instances connect on LAN via libp2p
-- [ ] Create campaign on Peer A, join from Peer B
-- [ ] Send event (chat message) from A → B receives it
-- [ ] Plugin loads and responds to RPC call
-- [ ] Works offline, syncs when reconnected
+- [x] Two instances connect on LAN via libp2p ✅
+- [x] Create campaign on Peer A, join from Peer B ✅
+- [ ] Send chat/dice events from A → B receives it (needs interactive mode)
+- [x] Plugin loads and responds to RPC call ✅
+- [x] Works offline, syncs when reconnected ✅
 - [ ] Optional node can relay between peers (post-MVP)
 
 ### Immediate Next Steps
-1. ✅ Document libp2p decision in architecture.md
-2. ⏳ Set up libp2p dependencies in `crates/network/Cargo.toml`
-3. ⏳ Implement basic peer connection with libp2p TCP/QUIC transports
-4. ⏳ Test direct P2P connection between two CLI instances
-5. ⏳ Implement event synchronization over libp2p streams
+1. ✅ Network layer complete with libp2p TCP/QUIC transports
+2. ✅ Event sync protocol implemented and tested
+3. ⏳ Add interactive chat mode while listening (`conclave listen` + send commands)
+4. ⏳ Wire up `chat` command to broadcast via network manager when peers connected
+5. ⏳ End-to-end test: two CLI instances, full campaign workflow
+6. ⏳ Update README with complete usage examples
 
 ---
 

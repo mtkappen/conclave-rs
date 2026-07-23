@@ -2,6 +2,7 @@
 //!
 //! All game actions are represented as immutable, signed events.
 
+use ed25519_dalek::{Signer, SigningKey, Verifier, VerifyingKey};
 use serde::{Deserialize, Serialize};
 use std::time::SystemTime;
 use uuid::Uuid;
@@ -118,14 +119,77 @@ impl SignedEvent {
             author_id,
             timestamp: SystemTime::now(),
             payload,
-            signature: String::new(), // Will be signed before storage
+            signature: String::new(),
         }
     }
 
-    /// Verify the event signature
+    /// Sign the event with a private key
+    pub fn sign(&mut self, signing_key: &SigningKey) {
+        let data = self.signature_data();
+        let signature = signing_key.sign(&data);
+        self.signature = hex::encode(signature.to_bytes());
+    }
+
+    /// Verify the event signature using the author's public key
     pub fn verify(&self) -> bool {
-        // TODO: Implement Ed25519 verification
-        true
+        if self.signature.is_empty() {
+            return false;
+        }
+
+        let sig_bytes = match hex::decode(&self.signature) {
+            Ok(bytes) => bytes,
+            Err(_) => return false,
+        };
+
+        let verifying_key_bytes = match hex::decode(&self.author_id) {
+            Ok(bytes) => bytes,
+            Err(_) => return false,
+        };
+
+        if verifying_key_bytes.len() != 32 {
+            return false;
+        }
+
+        let mut key_array = [0u8; 32];
+        key_array.copy_from_slice(&verifying_key_bytes);
+        
+        let verifying_key = match VerifyingKey::from_bytes(&key_array) {
+            Ok(k) => k,
+            Err(_) => return false,
+        };
+
+        let sig = match ed25519_dalek::Signature::from_slice(&sig_bytes) {
+            Ok(s) => s,
+            Err(_) => return false,
+        };
+
+        let data = self.signature_data();
+        verifying_key.verify(&data, &sig).is_ok()
+    }
+
+    /// Get the data that should be signed (excludes signature itself)
+    fn signature_data(&self) -> Vec<u8> {
+        format!(
+            "{}:{}:{}:{}:{}:{}:{}",
+            self.id,
+            self.campaign_id,
+            self.sequence_number,
+            self.event_type,
+            self.author_id,
+            self.timestamp.duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs(),
+            serde_json::to_string(&self.payload).unwrap_or_default()
+        ).into_bytes()
+    }
+
+    /// Get the author's public key as bytes
+    pub fn author_public_key(&self) -> Option<[u8; 32]> {
+        let bytes = hex::decode(&self.author_id).ok()?;
+        if bytes.len() != 32 {
+            return None;
+        }
+        let mut array = [0u8; 32];
+        array.copy_from_slice(&bytes);
+        Some(array)
     }
 }
 
@@ -168,5 +232,111 @@ mod tests {
         let deserialized: Event = serde_json::from_str(&json).unwrap();
 
         assert!(matches!(deserialized, Event::ChatMessage { .. }));
+    }
+
+    #[test]
+    fn test_sign_and_verify_event() {
+        use ed25519_dalek::SigningKey;
+        use rand::RngCore;
+
+        let mut key_bytes = [0u8; 32];
+        rand::thread_rng().fill_bytes(&mut key_bytes);
+        let signing_key = SigningKey::from_bytes(&key_bytes);
+        let verifying_key = signing_key.verifying_key();
+        
+        let player_id = hex::encode(verifying_key.as_bytes());
+        
+        let payload = serde_json::json!({
+            "type": "ChatMessage",
+            "author": player_id,
+            "content": "Test message",
+            "timestamp": 1234567890u64
+        });
+
+        let mut event = SignedEvent::new(
+            1,
+            Uuid::new_v4(),
+            1,
+            player_id.clone(),
+            payload,
+        );
+
+        assert!(!event.verify()); // Not signed yet
+
+        event.sign(&signing_key);
+
+        assert!(event.verify()); // Should verify now
+    }
+
+    #[test]
+    fn test_verify_fails_with_wrong_signature() {
+        use ed25519_dalek::SigningKey;
+        use rand::RngCore;
+
+        let mut key_bytes = [0u8; 32];
+        rand::thread_rng().fill_bytes(&mut key_bytes);
+        let signing_key = SigningKey::from_bytes(&key_bytes);
+        
+        let verifying_key = signing_key.verifying_key();
+        let player_id = hex::encode(verifying_key.as_bytes());
+        
+        let payload = serde_json::json!({
+            "type": "ChatMessage",
+            "author": player_id,
+            "content": "Test message",
+            "timestamp": 1234567890u64
+        });
+
+        let mut event = SignedEvent::new(
+            1,
+            Uuid::new_v4(),
+            1,
+            player_id.clone(),
+            payload,
+        );
+
+        event.sign(&signing_key);
+
+        // Tamper with the signature
+        event.signature.push('x');
+
+        assert!(!event.verify()); // Should fail verification
+    }
+
+    #[test]
+    fn test_verify_fails_with_tampered_data() {
+        use ed25519_dalek::SigningKey;
+        use rand::RngCore;
+
+        let mut key_bytes = [0u8; 32];
+        rand::thread_rng().fill_bytes(&mut key_bytes);
+        let signing_key = SigningKey::from_bytes(&key_bytes);
+        
+        let verifying_key = signing_key.verifying_key();
+        let player_id = hex::encode(verifying_key.as_bytes());
+        
+        let payload = serde_json::json!({
+            "type": "ChatMessage",
+            "author": player_id,
+            "content": "Test message",
+            "timestamp": 1234567890u64
+        });
+
+        let mut event = SignedEvent::new(
+            1,
+            Uuid::new_v4(),
+            1,
+            player_id.clone(),
+            payload,
+        );
+
+        event.sign(&signing_key);
+
+        // Tamper with the content after signing
+        if let Some(content) = event.payload.get_mut("content") {
+            *content = serde_json::json!("Tampered message");
+        }
+
+        assert!(!event.verify()); // Should fail verification
     }
 }

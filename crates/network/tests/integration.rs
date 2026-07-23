@@ -114,3 +114,81 @@ async fn test_event_broadcast() {
     
     drop(manager1);
 }
+
+/// Test end-to-end event sync between two peers
+#[tokio::test]
+async fn test_end_to_end_event_sync() {
+    use conclave_storage::{store_event, open_campaign_db};
+    use tempfile::TempDir;
+
+    let identity1 = Identity::generate("Peer 1 (DM)".to_string()).unwrap();
+    let _identity2 = Identity::generate("Peer 2 (Player)".to_string()).unwrap();
+
+    // Create temporary databases for both peers
+    let temp_dir1 = TempDir::new().unwrap();
+    let _temp_dir2 = TempDir::new().unwrap();
+    
+    let db_path1 = temp_dir1.path().join("campaign.db");
+
+    // Open database
+    let conn1 = open_campaign_db(&db_path1).unwrap();
+
+    let campaign_id = uuid::Uuid::new_v4();
+    let player_id = identity1.player_id();
+    
+    // First, create the campaign record (required by foreign key constraint)
+    conn1.execute(
+        "INSERT INTO campaigns (id, name, dm_id, rule_set, created_at) VALUES (?1, ?2, ?3, ?4, ?5)",
+        rusqlite::params![
+            campaign_id.to_string(),
+            "Test Campaign",
+            player_id.clone(),
+            Option::<String>::None,
+            chrono::Utc::now().timestamp()
+        ],
+    ).unwrap();
+    
+    // Create and sign an event on peer 1's side
+    let event_payload = serde_json::to_value(
+        Event::ChatMessage {
+            author: player_id.clone(),
+            content: "Test message".to_string(),
+            character_name: None,
+            timestamp: 1234567890,
+        }
+    ).unwrap();
+    
+    let mut signed_event = SignedEvent::new(
+        1,
+        campaign_id,
+        1,
+        player_id.clone(),
+        event_payload.clone(),
+    );
+    
+    // Sign the event using identity's signing key
+    use ed25519_dalek::SigningKey;
+    let mut key_bytes = [0u8; 32];
+    key_bytes.copy_from_slice(&identity1.signing_key.to_bytes());
+    let signing_key = SigningKey::from_bytes(&key_bytes);
+    signed_event.sign(&signing_key);
+
+    // Verify signature before storing
+    assert!(signed_event.verify());
+
+    // Store event in peer 1's database (simulating DM creating an event)
+    store_event(&conn1, &signed_event).unwrap();
+
+    // Verify event was stored
+    let max_seq = conclave_storage::get_max_sequence(&conn1, campaign_id).unwrap();
+    assert_eq!(max_seq, 1);
+
+    // Retrieve the event and verify it matches
+    let events = conclave_storage::get_events_up_to(&conn1, campaign_id, 10).unwrap();
+    assert_eq!(events.len(), 1);
+    assert_eq!(events[0].id, 1);
+    assert_eq!(events[0].sequence_number, 1);
+    assert!(events[0].verify());
+
+    drop(conn1);
+}

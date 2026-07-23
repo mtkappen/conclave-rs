@@ -24,6 +24,7 @@ struct PendingSyncRequest {
 }
 
 struct PendingRpcRequest {
+    #[allow(dead_code)]
     request_id: u64,
     response_tx: oneshot::Sender<NetResult<serde_json::Value>>,
 }

@@ -973,7 +973,7 @@ async fn main() {
 
             // Create network manager and make RPC call
             tokio::runtime::Runtime::new().unwrap().block_on(async {
-                let mut manager = match NetworkManager::bind(&identity, 0).await {
+                let manager = match NetworkManager::bind(&identity, 0).await {
                     Ok(m) => m,
                     Err(e) => {
                         eprintln!("Failed to start network: {}", e);
@@ -1071,7 +1071,7 @@ async fn main() {
 
             // Create network manager and make RPC call
             tokio::runtime::Runtime::new().unwrap().block_on(async {
-                let mut manager = match NetworkManager::bind(&identity, 0).await {
+                let manager = match NetworkManager::bind(&identity, 0).await {
                     Ok(m) => m,
                     Err(e) => {
                         eprintln!("Failed to start network: {}", e);

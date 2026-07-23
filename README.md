@@ -41,31 +41,79 @@ Save the seed phrase shown - it's required to recover your identity!
 
 ### 5. Join a campaign (as player)
 
+In another terminal:
+
 ```bash
-./target/release/conclave join-campaign <campaign-id> <dm-host:port>
+./target/release/conclave join-campaign <campaign-id> 192.168.1.100:7777
+```
+
+### 6. Send chat messages
+
+```bash
+# Store locally only
+./target/release/conclave chat <campaign-id> "Hello everyone!"
+
+# Broadcast to connected peers
+./target/release/conclave send-chat <campaign-id> "Rolling for initiative!"
+```
+
+### 7. Roll dice
+
+```bash
+./target/release/conclave roll 2d20+5 --campaign <campaign-id>
 ```
 
 ## CLI Commands
+
+### Chat & Dice
+
+| Command | Description |
+|---------|-------------|
+| `chat <campaign-id> <message>` | Send chat message (stores locally) |
+| `send-chat <campaign-id> <message>` | Broadcast chat message to peers |
+| `roll <expression> [--campaign <id>]` | Roll dice (e.g., "2d20+5") |
+
+### Network & Peers
+
+| Command | Description |
+|---------|-------------|
+| `listen --port <port>` | Start network listener (default: 7777) |
+| `peers` | List connected peers |
+| `connect <addr>` | Manually connect to peer |
+| `join-campaign <id> <peer>` | Join campaign and sync events |
+| `leave-campaign <id>` | Leave campaign (broadcasts event) |
+
+### Campaign Management
 
 | Command | Description |
 |---------|-------------|
 | `init --name <name>` | Create new identity with display name |
 | `identity` | Show current identity info |
-| `new-campaign <name>` | Create a new campaign (DM only) |
+| `new-campaign <name> [--rule-set]` | Create a new campaign (DM only) |
 | `list-campaigns` | List all local campaigns |
-| `join-campaign <id> <peer>` | Join an existing campaign |
-| `leave-campaign <id>` | Leave a campaign |
-| `members <id>` | List campaign members and roles (local DB) |
+| `members <id>` | List campaign members and roles |
 | `transfer-dm <id> <player-id>` | Transfer DM authority |
-| `chat <campaign> <message>` | Send a chat message |
-| `roll <expression> --campaign <id>` | Roll dice (e.g., "2d20+5") |
+
+### RPC Queries
+
+| Command | Description |
+|---------|-------------|
+| `rpc-members <id> <peer>` | Query remote peer for campaign members |
+| `rpc-info <id> <peer>` | Query remote peer for campaign metadata |
+
+### Plugins
+
+| Command | Description |
+|---------|-------------|
 | `load-plugin <campaign> <path>` | Load a plugin for campaign |
 | `unload-plugin <name>` | Unload a loaded plugin |
 | `list-plugins` | List all loaded plugins |
+
+### System
+
+| Command | Description |
+|---------|-------------|
 | `status` | Show current system status |
-| `listen --port <port>` | Start network listener |
-| `rpc-members <id> <peer>` | Query remote peer for campaign members |
-| `rpc-info <id> <peer>` | Query remote peer for campaign metadata |
 
 ## Architecture
 

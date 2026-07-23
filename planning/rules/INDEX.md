@@ -1,95 +1,33 @@
 # Rulebook Resources Index
 
-This folder contains rulebooks and system reference documents (SRDs) for various tabletop RPG systems that can be legally used under open licenses.
+This folder contains raw rulebooks and conversion resources for various tabletop RPG systems.
 
 ## Converted Rule Sets
 
-### Dungeons & Dragons 5th Edition
-- **dnd-5e-srd.md** - System Reference Document v5.2.1 (Creative Commons CC-BY-4.0) ✓
-  - Source: https://www.dndbeyond.com/srd
-  - License: Creative Commons Attribution 4.0 International
-  - Contains: Core rules, classes, spells, monsters, equipment under open license
+All converted rule sets are located in `/rules/`:
 
-### Pathfinder 2nd Edition
-- **Pathfinder-2e-core-Rulebook/** - Complete Core Rulebook extraction (Open Gaming License) ✓
-  - Source: Pathfinder 2e Core Rulebook PDF
-  - License: Open Gaming License (OGL)
-  - Contains: All 12 chapters, 374 spells, 30+ backgrounds, all feats, equipment, skills
-  - Structure: Organized by chapter with individual markdown files for each rule/spell
+- **dnd-5e/** - D&D 5th Edition SRD (Creative Commons CC-BY-4.0)
+- **Pathfinder-2e-core-Rulebook/** - Pathfinder 2e Core Rulebook (Open Gaming License)
+- **lancer/** - Lancer Free Version
+- **coc-d20/** - Call of Cthulhu d20 (awaiting conversion)
 
-### Lancer
-- **Lancer - Free Version.md** - Free rules PDF conversion ✓
-  - Contains: Core mech rules and system reference
+## Raw Files
 
-## Downloaded Resources (Raw Files)
+### Source Documents (Awaiting Conversion)
 
-### Call of Cthulhu d20
-- **Call of Cthulhu d20 - Core Rulebook.txt** - Raw OCR extraction
-  - Status: Awaiting conversion
-
-## Systems to Add
-
-### Fate Core System
-- **Status**: Researching download location  
-- **License**: Creative Commons
-- **Notes**: Open source SRD available online
-
-### Old-School Essentials (OSE) / OSR Games
-- **Status**: Researching download location
-- **License**: OGL for core rules
-- **Notes**: B/X D&D clone with open license content
+| File | System | Status |
+|------|--------|--------|
+| `Call of Cthulhu d20 - Core Rulebook.txt` | CoC d20 | Awaiting conversion |
+| `dnd-5e-srd.md` | D&D 5e | Converted (see `/rules/dnd-5e/`) |
+| `Lancer - Free Version.md` | Lancer | Converted (see `/rules/lancer/`) |
 
 ## Notes for LLM Processing
 
-When converting these rulebooks to LLM-friendly format, we need to extract:
+When converting rulebooks to LLM-friendly format, extract:
 
-1. **Core Mechanics**
-   - Dice rolling systems (d20, d6 pools, etc.)
-   - Success/failure thresholds
-   - Combat resolution
-   - Skill checks
-
-2. **Character System**
-   - Attributes/Stats
-   - Skills
-   - Feats/Talents/Perks
-   - Character creation steps
-   - Level progression
-
-3. **Combat Rules**
-   - Initiative
-   - Actions/Bonus actions/Reactions
-   - Attack resolution
-   - Damage types
-   - Conditions
-
-4. **Magic/Special Abilities** (if applicable)
-   - Spell lists and effects
-   - Power systems
-   - Resource management
-
-5. **Equipment**
-   - Weapons and armor
-   - Items and gear
-   - Costs and weights
-
-6. **Monsters/NPCs** (for DM features)
-   - Stat block structure
-   - Combat abilities
-   - Challenge ratings/levels
-
-## File Naming Convention
-
-Use format: `{system}-{edition/version}-{content-type}.pdf`
-
-Examples:
-- `dnd-5e-srd.pdf`
-- `pathfinder-2e-srd.pdf`
-- `fate-core-system.pdf`
-
-## Current Status
-
-- ✅ D&D 5e SRD converted to markdown
-- ✅ Pathfinder 2e Core Rulebook fully extracted and organized (374 spells, all chapters)
-- ✅ Lancer PDF converted to markdown
-- ⏳ Call of Cthulhu d20 awaiting conversion
+1. **Core Mechanics** - Dice systems, success thresholds, combat resolution
+2. **Character System** - Attributes, skills, feats, progression
+3. **Combat Rules** - Initiative, actions, attacks, damage, conditions
+4. **Magic/Special Abilities** - Spells, powers, resource management
+5. **Equipment** - Weapons, armor, items, costs
+6. **Monsters/NPCs** - Stat blocks, abilities, challenge ratings

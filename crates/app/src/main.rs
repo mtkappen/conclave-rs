@@ -107,6 +107,12 @@ enum Commands {
         /// Target player ID (recipient's public key hex)
         target_player_id: String,
     },
+
+    /// List members of a campaign
+    Members {
+        /// Campaign ID
+        campaign_id: String,
+    },
 }
 
 #[tokio::main]
@@ -780,6 +786,29 @@ async fn main() {
 
             println!("DM authority transferred to {}", target_player_id);
             println!("Note: Run 'conclave listen' in background to broadcast transfer to peers.");
+        }
+
+        Commands::Members { campaign_id } => {
+            let db_path = data_dir.join(format!("{}.db", campaign_id));
+            
+            if !db_path.exists() {
+                eprintln!("Campaign database not found: {}", db_path.display());
+                return;
+            }
+
+            let campaign_uuid: CampaignId = campaign_id.parse().expect("Invalid campaign UUID");
+            let conn = open_campaign_db(&db_path).expect("Failed to open campaign DB");
+            
+            let members = get_members(&conn, campaign_uuid).expect("Failed to get members");
+            
+            if members.is_empty() {
+                println!("No members found in campaign {}", campaign_id);
+            } else {
+                println!("Members of campaign {}:", campaign_id);
+                for (player_id, role) in members {
+                    println!("  - {} ({})", &player_id[..8], role);
+                }
+            }
         }
     }
 }

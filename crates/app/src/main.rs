@@ -120,6 +120,12 @@ enum Commands {
 
     /// Show current status and connected peers
     Status,
+
+    /// Leave a campaign (broadcast MemberLeft event)
+    LeaveCampaign {
+        /// Campaign ID
+        campaign_id: String,
+    },
 }
 
 #[tokio::main]
@@ -982,6 +988,62 @@ async fn main() {
             println!("Plugins: {}", plugin_count);
 
             println!("\nNetwork: Not listening (run 'conclave listen' to start)");
+        }
+
+        Commands::LeaveCampaign { campaign_id } => {
+            let id_path = data_dir.join("identity.json");
+            if !id_path.exists() {
+                println!("Error: No identity found. Run 'conclave init' first.");
+                return;
+            }
+
+            let identity_json: serde_json::Value = serde_json::from_reader(
+                std::fs::File::open(&id_path).unwrap()
+            ).unwrap();
+            
+            let identity = Identity::from_json(&identity_json).expect("Failed to load identity");
+
+            let campaign_uuid: CampaignId = campaign_id.parse().expect("Invalid campaign UUID");
+            let db_path = data_dir.join(format!("{}.db", campaign_id));
+            
+            if !db_path.exists() {
+                eprintln!("Campaign database not found: {}", db_path.display());
+                return;
+            }
+
+            let conn = open_campaign_db(&db_path).expect("Failed to open campaign DB");
+            let next_seq = get_max_sequence(&conn, campaign_uuid).unwrap_or(0) + 1;
+
+            let mut key_bytes = [0u8; 32];
+            key_bytes.copy_from_slice(&identity.signing_key.to_bytes());
+            let signing_key = SigningKey::from_bytes(&key_bytes);
+
+            // Create MemberLeft event
+            let member_left_payload = serde_json::to_value(
+                Event::MemberLeft {
+                    player_id: identity.player_id(),
+                }
+            ).unwrap();
+
+            let mut leave_event = SignedEvent::new(
+                next_seq,
+                campaign_uuid,
+                next_seq,
+                identity.player_id(),
+                member_left_payload,
+            );
+            leave_event.sign(&signing_key);
+
+            store_event(&conn, &leave_event).expect("Failed to store MemberLeft event");
+            
+            // Remove from members table
+            conn.execute(
+                "DELETE FROM members WHERE campaign_id = ?1 AND player_id = ?2",
+                rusqlite::params![campaign_uuid.to_string(), identity.player_id()],
+            ).ok();
+
+            println!("Broadcasting leave for campaign {}", campaign_id);
+            println!("Note: Run 'conclave listen' in background to broadcast to peers.");
         }
     }
 }

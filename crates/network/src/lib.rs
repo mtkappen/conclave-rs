@@ -564,6 +564,41 @@ impl NetworkManager {
                                             Err("Missing campaign_id parameter".into())
                                         }
                                     }
+                                    "get_campaign_info" => {
+                                        if let Some(campaign_id_str) = rpc_req.params.get("campaign_id").and_then(|v| v.as_str()) {
+                                            if let Ok(campaign_id) = campaign_id_str.parse::<Uuid>() {
+                                                if let Some(db) = &self.campaign_db {
+                                                    match conclave_storage::open_campaign_db(&db.path) {
+                                                        Ok(conn) => {
+                                                            let info: Option<(String, String, Option<String>)> = conn.query_row(
+                                                                "SELECT name, dm_id, rule_set FROM campaigns WHERE id = ?1",
+                                                                rusqlite::params![campaign_id.to_string()],
+                                                                |row| Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?, row.get::<_, Option<String>>(2)?))
+                                                            ).ok();
+                                                            
+                                                            match info {
+                                                                Some((name, dm_id, rule_set)) => {
+                                                                    Ok(serde_json::json!({
+                                                                        "name": name,
+                                                                        "dm_id": dm_id,
+                                                                        "rule_set": rule_set
+                                                                    }))
+                                                                }
+                                                                None => Err("Campaign not found".into())
+                                                            }
+                                                        }
+                                                        Err(e) => Err(format!("DB error: {}", e)),
+                                                    }
+                                                } else {
+                                                    Err("No database configured".into())
+                                                }
+                                            } else {
+                                                Err("Invalid campaign ID".into())
+                                            }
+                                        } else {
+                                            Err("Missing campaign_id parameter".into())
+                                        }
+                                    }
                                     _ => Err(format!("Unknown method: {}", rpc_req.method)),
                                 };
 

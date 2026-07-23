@@ -558,8 +558,6 @@ async fn main() {
 
             store_event(&conn, &chat_event).expect("Failed to store chat event");
             println!("Chat message stored locally (seq {})", next_seq);
-
-            // Broadcast if we have a running network manager
             println!("Note: Run 'conclave listen' in background to broadcast events to peers.");
         }
 

@@ -8,410 +8,436 @@ This chapter contains all spells from the Pathfinder 2e Core Rulebook, organized
 - **1st-10th Level**: Standard spells with increasing power
 - **Focus Spells**: Special spells used with Focus Points (see pages 386-407)
 
-### 1st/nd/rd/th Level Spells
+### Cantrips (Level 0)
 
-**1st-Level Spells**:
+**Spells**:
 
-- AIR BUBBLE
-- ALARM
-- ANT HAUL
-- BANE
-- BLESS
-- BURNING HANDS
-- Bulk or less GUST OF WIND
-- CHARM
-- COLOR SPRAY
-- COMMAND
-- CREATE WATER
-- DETECT ALIGNMENT
-- DETECT POISON
-- DISRUPTING WEAPONS
-- Duration until the next time you make your daily preparations MAGIC WEAPON
-- FEAR
-- FEATHER FALL
-- FLEET STEP
-- FLOATING DISK
-- GREASE
-- GRIM TENDRILS
-- HARM
-- HEAL
-- HYDRAULIC PUSH
-- ILLUSORY DISGUISE
-- ITEM FACADE
-- If you cast this spell LONGSTRIDER
-- It is substantial ILLUSORY OBJECT
-- JUMP
-- LOCK
-- MAGE ARMOR
-- MAGIC AURA
-- MAGIC FANG
-- MAGIC MISSILE
-- MENDING
-- MINDLINK
-- One cubic RAY OF ENFEEBLEMENT
-- PEST FORM
-- PHANTOM PAIN
-- PROTECTION
-- PURIFY FOOD AND DRINK
-- SANCTUARY
-- SHILLELAGH
-- SHOCKING GRASP
-- SLEEP
-- SUMMON ANIMAL
-- SUMMON CONSTRUCT
-- SUMMON FEY
-- SUMMON PLANT OR FUNGUS
-- Spell SPIDER STING
-- Success Whenever the target becomes affected by a spell with SPIRIT LINK
-- TRUE STRIKE
-- The number of times a target PASS WITHOUT TRACE
-- The spell effect emanates from the touched SOOTHE
-- These attacks are Strength NEGATE AROMA
-- This applies both if the creature was already invisible GOBLIN POX
-- UNSEEN SERVANT
-- VENTRILOQUISM
+- Acid Splash
+- Allegro
+- Chill Touch
+- Dancing Lights
+- Daze
+- Detect Magic
+- Dirge Of Doom
+- Disrupt Undead
+- Divine Lance
+- Electric Arc
+- Forbidding Ward
+- Ghost Sound
+- Guidance
+- House Of Imaginary Walls
+- Inspire Competence
+- Inspire Courage
+- Inspire Defense
+- Know Direction
+- Light
+- Mage Hand
+- Mending
+- Message
+- Plant Transmutation
+- Prestidigitation
+- Produce Flame
+- Ray Of Frost
+- Read Aura
+- Shield
+- Sigil
+- Stabilize
+- Tanglefoot
+- Telekinetic Projectile
+- Triple Time
 
-### 2st/nd/rd/th Level Spells
+### Focus Spells
 
-**2nd-Level Spells**:
+**Spells**:
 
-- ACID ARROW
-- ANIMAL FORM
-- ANIMAL MESSENGER
-- BARKSKIN
-- BLUR
-- CALM EMOTIONS
-- COMPREHEND LANGUAGE
-- CONTINUAL FLAME
-- CREATE FOOD
-- DARKNESS
-- DARKVISION
-- DEAFNESS
-- DEATH KNELL
-- DISPEL MAGIC
-- ENDURE ELEMENTS
-- ENLARGE
-- ENTANGLE
-- FAERIE FIRE
-- FALSE LIFE
-- FLAMING SPHERE
-- GENTLE REPOSE
-- GHOULISH CRAVINGS
-- GLITTERDUST
-- HUMANOID FORM
-- Hit Points restored HIDEOUS LAUGHTER
-- ILLUSORY CREATURE
-- INVISIBILITY
-- If your corresponding unarmed attack ENHANCE VICTUALS
-- KNOCK
-- Large or smaller creature RESTORATION
-- MIRROR IMAGE
-- MISDIRECTION
-- OBSCURING MIST
-- PARANOIA
-- PHANTOM STEED
-- REMOVE FEAR
-- REMOVE PARALYSIS
-- RESIST ENERGY
-- RESTORE SENSES
-- SEE INVISIBILITY
-- SHAPE WOOD
-- SHATTER
-- SHIELD ACTIONS SHRINK
-- SHIELD OTHER
-- SILENCE
-- SOUND BURST
-- SPEAK WITH ANIMALS
-- SPECTRAL HAND
-- SPIRITUAL WEAPON
-- STATUS
-- SUMMON ELEMENTAL
-- TELEKINETIC MANEUVER
-- TOUCH OF IDIOCY
-- TREE SHAPE
-- The animal does AUGURY
-- The hand can move as far as it needs to within SPIDER CLIMB
-- UNDETECTABLE ALIGNMENT
-- WATER BREATHING
-- WATER WALK
-- WEB
-- You can target an unattended object with a MAGIC MOUTH
+- Champions Sacrifice
+- Counter Performance
+- Fatal Aria
+- Heros Defiance
+- Inspire Heroics
+- Lay On Hands
+- Lingering Composition
+- Loremasters Etude
+- Soothing Ballad
 
-### 3st/nd/rd/th Level Spells
+### 1st-Level Spells
 
-**3rd-Level Spells**:
+**Spells**:
 
-- A creature must attempt SECRET PAGE
-- ANIMAL VISION
-- Any creature that touches any part of the image or uses INSECT FORM
-- BIND UNDEAD
-- BLINDNESS
-- CHILLING DARKNESS
-- CIRCLE OF PROTECTION
-- CLAIRAUDIENCE
-- CRISIS OF FAITH
-- Damage DREAM MESSAGE
-- EARTHBIND
-- ENTHRALL
-- FEET TO FINS
-- FIREBALL
-- GHOSTLY WEAPON
-- GLYPH OF WARDING
-- HASTE
-- HEROISM
-- HYPERCOGNITION
-- HYPNOTIC PATTERN
-- INVISIBILITY SPHERE
-- LEVITATE
-- LIGHTNING BOLT
-- LOCATE
-- MELD INTO STONE
-- MIND READING
-- NEUTRALIZE POISON
-- NONDETECTION
-- PARALYZE
-- REMOVE DISEASE
-- S GUIDE
-- SEARING LIGHT
-- SHRINK ITEM
-- SLOW
-- STINKING CLOUD
-- VAMPIRIC TOUCH
-- WALL OF THORNS
-- WALL OF WIND
-- You have hands in this battle form and can use SANCTIFIED GROUND
-- ZONE OF TRUTH
+- Air Bubble
+- Alarm
+- Ant Haul
+- Bane
+- Bless
+- Burning Hands
+- Charm
+- Color Spray
+- Command
+- Create Water
+- Detect Alignment
+- Detect Poison
+- Disrupting Weapons
+- Fear
+- Feather Fall
+- Fleet Step
+- Floating Disk
+- Goblin Pox
+- Grease
+- Grim Tendrils
+- Gust Of Wind
+- Harm
+- Heal
+- Hydraulic Push
+- Illusory Disguise
+- Illusory Object
+- Item Facade
+- Jump
+- Lock
+- Longstrider
+- Mage Armor
+- Magic Aura
+- Magic Fang
+- Magic Missile
+- Magic Weapon
+- Mindlink
+- Negate Aroma
+- Pass Without Trace
+- Pest Form
+- Phantom Pain
+- Protection
+- Ray Of Enfeeblement
+- Sanctuary
+- Shillelagh
+- Shocking Grasp
+- Sleep
+- Soothe
+- Spider Sting
+- Summon Animal
+- Summon Construct
+- Summon Fey
+- Summon Plant Or Fungus
+- True Strike
+- Unseen Servant
+- Ventriloquism
 
-### 4st/nd/rd/th Level Spells
+### 2nd-Level Spells
 
-**4th-Level Spells**:
+**Spells**:
 
-- A trampled creature NIGHTMARE
-- AIR WALK
-- ANATHEMATIC REPRISAL
-- BLINK
-- CLAIRVOYANCE
-- CREATION
-- Critical Failure The target must use all its actions on its next CONFUSION
-- DETECT SCRYING
-- DIMENSION DOOR
-- DIMENSIONAL ANCHOR
-- DINOSAUR FORM
-- DISCERN LIES
-- DIVINE WRATH
-- Duration until your next daily preparations WALL OF FIRE
-- FIRE SHIELD
-- FLY
-- FREEDOM OF MOVEMENT
-- GASEOUS FORM
-- GLIBNESS
-- GLOBE OF INVULNERABILITY
-- HALLUCINATORY TERRAIN
-- HOLY CASCADE
-- HYDRAULIC TORRENT
-- It serves VEIL
-- MODIFY MEMORY
-- PHANTASMAL KILLER
-- PRIVATE SANCTUM
-- READ OMENS
-- REMOVE CURSE
-- RESILIENT SPHERE
-- S CURSE
-- SHAPE STONE
-- SOLID FOG
-- SPEAK WITH PLANTS
-- SPELL IMMUNITY
-- STONESKIN
-- Spell Descriptions AERIAL FORM
-- TALKING CORPSE
-- TELEPATHY
-- Targets dead creatures and living creatures of ROPE TRICK
-- Traditions primal SUGGESTION
-- VITAL BEACON
-- WEAPON STORM
+- Acid Arrow
+- Animal Form
+- Animal Messenger
+- Augury
+- Barkskin
+- Blur
+- Calm Emotions
+- Comprehend Languages
+- Continual Flame
+- Create Food
+- Darkness
+- Darkvision
+- Deafness
+- Death Knell
+- Dispel Magic
+- Endure Elements
+- Enhance Victuals
+- Enlarge
+- Entangle
+- Faerie Fire
+- False Life
+- Flaming Sphere
+- Gentle Repose
+- Ghoulish Cravings
+- Glitterdust
+- Hideous Laughter
+- Humanoid Form
+- Illusory Creature
+- Invisibility
+- Knock
+- Magic Mouth
+- Mirror Image
+- Misdirection
+- Obscuring Mist
+- Paranoia
+- Phantom Steed
+- Remove Fear
+- Remove Paralysis
+- Resist Energy
+- Restoration
+- Restore Senses
+- Shape Wood
+- Shatter
+- Shield Other
+- Shrink
+- Silence
+- Sound Burst
+- Speak With Animals
+- Spectral Hand
+- Spider Climb
+- Spiritual Weapon
+- Summon Elemental
+- Touch Of Idiocy
+- Tree Shape
+- Undetectable Alignment
+- Water Breathing
+- Water Walk
+- Web
 
-### 5st/nd/rd/th Level Spells
+### 3rd-Level Spells
 
-**5th-Level Spells**:
+**Spells**:
 
-- ABYSSAL PLAGUE
-- BANISHMENT
-- BLACK TENTACLES
-- BREATH OF LIFE
-- Because the PRYING EYE
-- CHROMATIC WALL
-- CLOAK OF COLORS
-- CLOUDKILL
-- CONE OF COLD
-- CONTROL WATER
-- CRUSHING DESPAIR
-- DEATH WARD
-- DREAMING POTENTIAL
-- DROP DEAD
-- ELEMENTAL FORM
-- FALSE VISION
-- FLAME STRIKE
-- HALLUCINATION
-- ILLUSORY SCENE
-- MIND PROBE
-- MOON FRENZY
-- PASSWALL
-- PLANT FORM
-- S CURSE
-- SENDING
-- SHADOW BLAST
-- SHADOW SIPHON
-- SHADOW WALK
-- SPIRITUAL GUARDIAN
-- SUBCONSCIOUS SUGGESTION
-- SUMMON CELESTIAL
-- SUMMON DRAGON
-- SUMMON ENTITY
-- SUMMON FIEND
-- SUMMON GIANT
-- SYNAPTIC PULSE
-- SYNESTHESIA
-- TELEKINETIC HAUL
-- TELEPATHIC BOND
-- TONGUES
-- TREE STRIDE
-- WALL OF ICE
-- WALL OF STONE
+- Animal Vision
+- Bind Undead
+- Blindness
+- Chilling Darkness
+- Circle Of Protection
+- Clairaudience
+- Crisis Of Faith
+- Dream Message
+- Earthbind
+- Enthrall
+- Feet To Fins
+- Fireball
+- Ghostly Weapon
+- Glyph Of Warding
+- Haste
+- Heroism
+- Hypercognition
+- Hypnotic Pattern
+- Insect Form
+- Invisibility Sphere
+- Levitate
+- Lightning Bolt
+- Locate
+- Meld Into Stone
+- Mind Reading
+- Neutralize Poison
+- Nondetection
+- Paralyze
+- Remove Disease
+- Shrink Item
+- Slow
+- Vampiric Touch
+- Wall Of Thorns
+- Wall Of Wind
+- Zone Of Truth
 
-### 6st/nd/rd/th Level Spells
+### 4th-Level Spells
 
-**6th-Level Spells**:
+**Spells**:
 
-- BALEFUL POLYMORPH
-- BLADE BARRIER
-- CHAIN LIGHTNING
-- COLLECTIVE TRANSPOSITION
-- Choose one target creature VAMPIRIC EXSANGUINATION
-- DISINTEGRATE
-- DOMINATE
-- DRAGON FORM
-- FEEBLEMIND
-- FIELD OF LIFE
-- FIRE SEEDS
-- FLESH TO STONE
-- MISLEAD
-- PHANTASMAL CALAMITY
-- PURPLE WORM STING
-- RAISE DEAD
-- REPULSION
-- RIGHTEOUS MIGHT
-- SCRYING
-- SPELLWRACK
-- SPIRIT BLAST
-- STONE TELL
-- STONE TO FLESH
-- TANGLING CREEPERS
-- TELEPORT
-- TRUE SEEING
-- VIBRANT PATTERN
-- WALL OF FORCE
-- ZEALOUS CONVICTION
+- Aerial Form
+- Air Walk
+- Anathematic Reprisal
+- Blink
+- Clairvoyance
+- Confusion
+- Creation
+- Detect Scrying
+- Dimensional Anchor
+- Dimension Door
+- Dinosaur Form
+- Discern Lies
+- Divine Wrath
+- Fire Shield
+- Fly
+- Freedom Of Movement
+- Gaseous Form
+- Glibness
+- Globe Of Invulnerability
+- Hallucinatory Terrain
+- Holy Cascade
+- Hydraulic Torrent
+- Modify Memory
+- Nightmare
+- Phantasmal Killer
+- Remove Curse
+- Resilient Sphere
+- Solid Fog
+- Speak With Plants
+- Stoneskin
+- Suggestion
+- Talking Corpse
+- Veil
+- Vital Beacon
+- Wall Of Fire
+- Weapon Storm
 
-### 7st/nd/rd/th Level Spells
+### 5th-Level Spells
 
-**7th-Level Spells**:
+**Spells**:
 
-- CONTINGENCY
-- DIMENSIONAL LOCK
-- DIVINE DECREE
-- DIVINE VESSEL
-- DUPLICATE FOE
-- ECLIPSE BURST
-- ETHEREAL JAUNT
-- FIERY BODY
-- FINGER OF DEATH
-- MAGNIFICENT MANSION
-- MASK OF TERROR
-- PLANE SHIFT
-- POSSESSION
-- POWER WORD BLIND
-- PRISMATIC SPRAY
-- PROJECT IMAGE
-- REGENERATE
-- RETROCOGNITION
-- SPELL TURNING
-- SUNBURST
-- TRUE TARGET
-- Traditions occult REVERSE GRAVITY
-- UNFETTERED PACK
-- VISIONS OF DANGER
-- VOLCANIC ERUPTION
-- WARP MIND
-- You gain the following statistics and abilities regardless of ENERGY AEGIS
+- Abyssal Plague
+- Banishment
+- Black Tentacles
+- Breath Of Life
+- Chromatic Wall
+- Cloak Of Colors
+- Cloudkill
+- Cone Of Cold
+- Control Water
+- Crushing Despair
+- Death Ward
+- Dreaming Potential
+- Drop Dead
+- Elemental Form
+- False Vision
+- Flame Strike
+- Hallucination
+- Illusory Scene
+- Mind Probe
+- Moon Frenzy
+- Passwall
+- Plant Form
+- Shadow Walk
+- Subconscious Suggestion
+- Summon Celestial
+- Summon Dragon
+- Summon Entity
+- Summon Fiend
+- Summon Giant
+- Synaptic Pulse
+- Synesthesia
+- Telekinesis
+- Telepathic Bond
+- Tongues
+- Wall Of Ice
+- Wall Of Stone
 
-### 8st/nd/rd/th Level Spells
+### 6th-Level Spells
 
-**8th-Level Spells**:
+**Spells**:
 
-- ANTIMAGIC FIELD
-- DISAPPEARANCE
-- DIVINE AURA
-- DIVINE INSPIRATION
-- Damage DREAM COUNCIL
-- EARTHQUAKE
-- HORRID WILTING
-- MAZE
-- MIND BLANK
-- MOMENT OF RENEWAL
-- MONSTROSITY FORM
-- POLAR RAY
-- POWER WORD STUN
-- PRISMATIC WALL
-- PUNISHING WINDS
-- SCINTILLATING PATTERN
-- SPIRIT SONG
-- SPIRITUAL EPIDEMIC
-- These DISCERN LOCATION
-- UNCONTROLLABLE DANCE
-- UNRELENTING OBSERVATION
-- WIND WALK
+- Baleful Polymorph
+- Blade Barrier
+- Chain Lightning
+- Circle Of Death
+- Collective Transposition
+- Disintegrate
+- Dominate
+- Dragon Form
+- Feeblemind
+- Field Of Life
+- Fire Seeds
+- Flesh To Stone
+- Mislead
+- Permanent Image
+- Phantasmal Calamity
+- Repulsion
+- Scrying
+- Spellwrack
+- Stone Tell
+- Stone To Flesh
+- Teleport
+- True Sight
+- Vampiric Exsanguination
 
-### 9st/nd/rd/th Level Spells
+### 7th-Level Spells
 
-**9th-Level Spells**:
+**Spells**:
 
-- Any creature moving on the TELEPATHIC DEMAND
-- CRUSADE
-- DISJUNCTION
-- FORESIGHT
-- IMPLOSION
-- If BIND SOUL
-- MASSACRE
-- METEOR SWARM
-- OVERWHELMING PRESENCE
-- POWER WORD KILL
-- PRISMATIC SPHERE
-- RESPLENDENT MANSION
-- S ENMITY
-- SHAPECHANGE
-- STORM OF VENGEANCE
-- UNFATHOMABLE SONG
-- WAIL OF THE BANSHEE
-- WEAPON OF JUDGMENT
-- WEIRD
+- Contingency
+- Dimensional Lock
+- Divine Decree
+- Divine Vessel
+- Duplicate Foe
+- Eclipse Burst
+- Energy Aegis
+- Ethereal Jaunt
+- Etherealness
+- Fiery Body
+- Finger Of Death
+- Heroes Feast
+- Magnificent Mansion
+- Mask Of Terror
+- Plane Shift
+- Possession
+- Power Word Blind
+- Prismatic Spray
+- Project Image
+- Regenerate
+- Retrocognition
+- Reverse Gravity
+- Sunbeam
+- Sunburst
+- Unfettered Pack
 
-### 10st/nd/rd/th Level Spells
+### 8th-Level Spells
 
-**10th-Level Spells**:
+**Spells**:
 
-- ALTER REALITY
-- AVATAR
-- Athletics check or Reflex save against your spell DC to avoid WISH
-- CATACLYSM
-- Duration sustained PRIMAL PHENOMENON
-- FABRICATED TRUTH
-- GATE
-- MIRACLE
-- NATURE INCARNATE
-- PRIMAL HERD
-- REMAKE
-- REVIVAL
-- TIME STOP
+- Antimagic Field
+- Antipathy Sympathy
+- Demiplane
+- Disappearance
+- Discern Location
+- Divine Aura
+- Divine Inspiration
+- Dream Council
+- Earthquake
+- Horrid Wilting
+- Maze
+- Mind Blank
+- Moment Of Renewal
+- Monstrosity Form
+- Polar Ray
+- Power Word Stun
+- Prismatic Wall
+- Scintillating Pattern
+- Simulacrum
+- Spirit Song
+- Symbol
+- Uncontrollable Dance
+- Unrelenting Observation
+- Vision
+- Wind Walk
+
+### 9th-Level Spells
+
+**Spells**:
+
+- Astral Projection
+- Bind Soul
+- Clone
+- Crusade
+- Disjunction
+- Foresight
+- Implosion
+- Incendiary Cloud
+- Massacre
+- Mass Heal
+- Meteor Swarm
+- Overwhelming Presence
+- Power Word Kill
+- Prismatic Sphere
+- Screen
+- Shapechange
+- Storm Of Vengeance
+- Weird
+
+### 10th-Level Spells
+
+**Spells**:
+
+- Alter Reality
+- Apocalypse
+- Avatar
+- Cataclysm
+- Deity Form
+- Epic Transformation
+- Fabricated Truth
+- Gate
+- Gods Might
+- Miracle
+- Nature Incarnate
+- Primal Herd
+- Primal Phenomenon
+- Remake
+- Revival
+- Time Stop
+- True Resurrection
+- Wish
 
 ## Spell Traditions
 

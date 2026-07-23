@@ -3,18 +3,79 @@
 //! Supports direct TCP/QUIC connections for MVP, with relay support ready for Phase 3+.
 
 use conclave_core::Identity;
-use conclave_protocol::SignedEvent;
+use conclave_protocol::{CampaignId, SignedEvent};
 use futures::StreamExt;
 use libp2p::identity::{ed25519, Keypair};
-use libp2p::request_response::{self, ProtocolSupport};
+use libp2p::request_response::{self, OutboundRequestId, ProtocolSupport};
 use libp2p::swarm::SwarmEvent;
 use libp2p::{identify, mdns, ping, Multiaddr, PeerId};
-use std::collections::HashSet;
+use serde::{Deserialize, Serialize};
+use std::collections::{HashMap, HashSet};
 use tokio::sync::{mpsc, oneshot};
 use tracing::{debug, error, info, warn};
 
+struct PendingSyncRequest {
+    campaign_id: CampaignId,
+    response_tx: oneshot::Sender<NetResult<Vec<SignedEvent>>>,
+}
+
+/// Database connection wrapper for serving sync requests
+pub struct CampaignDbHandle {
+    pub path: std::path::PathBuf,
+}
+
+impl CampaignDbHandle {
+    pub fn new<P: AsRef<std::path::Path>>(path: P) -> Self {
+        Self { 
+            path: path.as_ref().to_path_buf() 
+        }
+    }
+
+    pub fn get_events(&self, campaign_id: CampaignId, _from_sequence: u64) -> NetResult<Vec<SignedEvent>> {
+        let conn = conclave_storage::open_campaign_db(&self.path)
+            .map_err(|e| NetworkError::ConnectionFailed(format!("DB error: {}", e)))?;
+        
+        conclave_storage::get_events_up_to(&conn, campaign_id, u64::MAX)
+            .map_err(|e| NetworkError::ConnectionFailed(format!("DB query error: {}", e)))
+    }
+
+    pub fn get_max_sequence(&self, campaign_id: CampaignId) -> NetResult<u64> {
+        let conn = conclave_storage::open_campaign_db(&self.path)
+            .map_err(|e| NetworkError::ConnectionFailed(format!("DB error: {}", e)))?;
+        
+        conclave_storage::get_max_sequence(&conn, campaign_id)
+            .map_err(|e| NetworkError::ConnectionFailed(format!("DB query error: {}", e)))
+    }
+}
+
 /// Protocol ID for event broadcast/request-response
 const CONCLAVE_EVENT_PROTOCOL: &str = "/conclave/event/1.0.0";
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EventSyncRequest {
+    pub campaign_id: CampaignId,
+    pub from_sequence: u64,
+    pub to_sequence: Option<u64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EventSyncResponse {
+    pub events: Vec<SignedEvent>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum NetworkRequest {
+    Sync(EventSyncRequest),
+    Broadcast(SignedEvent),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum NetworkResponse {
+    Sync(EventSyncResponse),
+    Ack,
+}
 
 #[derive(Debug)]
 pub enum NetworkError {
@@ -90,6 +151,12 @@ pub enum NetworkCommand {
     GetLocalAddr {
         response: oneshot::Sender<Option<Multiaddr>>,
     },
+    SyncCampaignEvents {
+        campaign_id: CampaignId,
+        from_sequence: u64,
+        to_peer: PeerId,
+        response: oneshot::Sender<NetResult<Vec<SignedEvent>>>,
+    },
 }
 
 #[derive(Debug, Clone)]
@@ -105,7 +172,7 @@ struct ConclaveBehaviour {
     identify: identify::Behaviour,
     ping: ping::Behaviour,
     mdns: mdns::tokio::Behaviour,
-    event_sync: request_response::json::Behaviour<SignedEvent, Vec<u8>>,
+    event_sync: request_response::json::Behaviour<NetworkRequest, NetworkResponse>,
 }
 
 /// Peer connection handle for sending events
@@ -131,9 +198,12 @@ impl PeerHandle {
 /// Wrapper around libp2p swarm for peer management
 pub struct NetworkManager {
     swarm: libp2p::Swarm<ConclaveBehaviour>,
+    command_tx: mpsc::Sender<NetworkCommand>,
     command_rx: mpsc::Receiver<NetworkCommand>,
     local_peer_id: PeerId,
     connected_peers: HashSet<PeerId>,
+    pending_sync_requests: HashMap<OutboundRequestId, PendingSyncRequest>,
+    campaign_db: Option<CampaignDbHandle>,
 }
 
 impl NetworkManager {
@@ -166,7 +236,7 @@ impl NetworkManager {
                     )),
                     ping: ping::Behaviour::default(),
                     mdns: mdns::tokio::Behaviour::new(mdns::Config::default(), local_peer_id)?,
-                    event_sync: request_response::json::Behaviour::<SignedEvent, Vec<u8>>::new(
+                    event_sync: request_response::json::Behaviour::<NetworkRequest, NetworkResponse>::new(
                         [(libp2p::StreamProtocol::new(CONCLAVE_EVENT_PROTOCOL), ProtocolSupport::Full)],
                         request_response::Config::default(),
                     ),
@@ -188,14 +258,22 @@ impl NetworkManager {
         info!("Listening on TCP: {}", tcp_addr);
         info!("Listening on QUIC: {}", quic_addr);
 
-        let (_command_tx, command_rx) = mpsc::channel(100);
+        let (command_tx, command_rx) = mpsc::channel(100);
 
         Ok(NetworkManager {
             swarm,
+            command_tx,
             command_rx,
             local_peer_id,
             connected_peers: HashSet::new(),
+            pending_sync_requests: HashMap::new(),
+            campaign_db: None,
         })
+    }
+
+    /// Set the campaign database for serving sync requests
+    pub fn set_campaign_db(&mut self, db_handle: CampaignDbHandle) {
+        self.campaign_db = Some(db_handle);
     }
 
     /// Run the network manager loop (should be spawned as a task)
@@ -238,7 +316,8 @@ impl NetworkManager {
                 debug!("Broadcasting event to {} peers", self.connected_peers.len());
                 
                 for peer_id in self.connected_peers.iter() {
-                    self.swarm.behaviour_mut().event_sync.send_request(peer_id, event.clone());
+                    let request = NetworkRequest::Broadcast(event.clone());
+                    self.swarm.behaviour_mut().event_sync.send_request(peer_id, request);
                     info!("Sent broadcast event to {}", peer_id);
                 }
                 
@@ -251,7 +330,8 @@ impl NetworkManager {
                 }
                 
                 debug!("Sending event to peer: {}", peer_id);
-                self.swarm.behaviour_mut().event_sync.send_request(&peer_id, event);
+                let request = NetworkRequest::Broadcast(event);
+                self.swarm.behaviour_mut().event_sync.send_request(&peer_id, request);
                 info!("Sent event to {}", peer_id);
                 
                 let _ = response.send(Ok(()));
@@ -263,6 +343,27 @@ impl NetworkManager {
             NetworkCommand::GetLocalAddr { response } => {
                 let addr = self.swarm.listeners().next().cloned();
                 let _ = response.send(addr);
+            }
+            NetworkCommand::SyncCampaignEvents { campaign_id, from_sequence, to_peer, response } => {
+                if !self.connected_peers.contains(&to_peer) {
+                    let _ = response.send(Err(NetworkError::ConnectionFailed("Not connected to peer".into())));
+                    return Ok(());
+                }
+
+                debug!("Requesting events for campaign {} from sequence {}", campaign_id, from_sequence);
+                
+                let request = NetworkRequest::Sync(EventSyncRequest {
+                    campaign_id,
+                    from_sequence,
+                    to_sequence: None,
+                });
+
+                let outbound_id = self.swarm.behaviour_mut().event_sync.send_request(&to_peer, request);
+                
+                self.pending_sync_requests.insert(outbound_id, PendingSyncRequest {
+                    campaign_id,
+                    response_tx: response,
+                });
             }
         }
         Ok(())
@@ -292,20 +393,71 @@ impl NetworkManager {
             }
             SwarmEvent::Behaviour(ConclaveBehaviourEvent::EventSync(message)) => match message {
                 request_response::Event::Message { peer, message } => match message {
-                    request_response::Message::Request { request, channel, .. } => {
-                        debug!("Received event from peer: {}", peer);
-                        info!("Received signed event {} from {}", request.id, peer);
-                        let _ = self.swarm.behaviour_mut().event_sync.send_response(channel, vec![]);
+                    request_response::Message::Request { request_id: _, channel, request } => {
+                        match request {
+                            NetworkRequest::Sync(sync_req) => {
+                                info!("Received event sync request for campaign {} from sequence {}", 
+                                      sync_req.campaign_id, sync_req.from_sequence);
+                                
+                                let events = if let Some(db) = &self.campaign_db {
+                                    match db.get_events(sync_req.campaign_id, sync_req.from_sequence) {
+                                        Ok(evts) => {
+                                            // Filter to only return events from from_sequence onwards
+                                            evts.into_iter()
+                                                .filter(|e| e.sequence_number >= sync_req.from_sequence)
+                                                .collect()
+                                        }
+                                        Err(e) => {
+                                            warn!("Failed to get events for sync: {}", e);
+                                            vec![]
+                                        }
+                                    }
+                                } else {
+                                    warn!("No campaign DB configured, returning empty response");
+                                    vec![]
+                                };
+                                
+                                info!("Sending {} events in sync response", events.len());
+                                let response = NetworkResponse::Sync(EventSyncResponse { events });
+                                let _ = self.swarm.behaviour_mut().event_sync.send_response(channel, response);
+                            }
+                            NetworkRequest::Broadcast(event) => {
+                                info!("Received broadcast event {} from {}", event.id, peer);
+                                
+                                let response = NetworkResponse::Ack;
+                                let _ = self.swarm.behaviour_mut().event_sync.send_response(channel, response);
+                            }
+                        }
                     }
-                    request_response::Message::Response { .. } => {
-                        debug!("Received response from peer");
+                    request_response::Message::Response { request_id, response } => {
+                        match response {
+                            NetworkResponse::Sync(sync_resp) => {
+                                debug!("Received event sync response: {} events", sync_resp.events.len());
+                                
+                                if let Some(pending) = self.pending_sync_requests.remove(&request_id) {
+                                    match pending.response_tx.send(Ok(sync_resp.events)) {
+                                        Ok(_) => info!("Completed sync request for campaign {}", pending.campaign_id),
+                                        Err(_) => warn!("Sync response receiver dropped for campaign {}", pending.campaign_id),
+                                    }
+                                } else {
+                                    warn!("Received unexpected sync response");
+                                }
+                            }
+                            NetworkResponse::Ack => {
+                                debug!("Received ack for broadcast event");
+                            }
+                        }
                     }
                 },
                 request_response::Event::InboundFailure { peer, error, .. } => {
                     warn!("Inbound failure from peer {:?}: {:?}", peer, error);
                 }
-                request_response::Event::OutboundFailure { peer, error, .. } => {
+                request_response::Event::OutboundFailure { request_id, peer, error, .. } => {
                     warn!("Outbound failure to peer {:?}: {:?}", peer, error);
+                    
+                    if let Some(pending) = self.pending_sync_requests.remove(&request_id) {
+                        let _ = pending.response_tx.send(Err(NetworkError::ConnectionFailed(format!("Sync failed: {:?}", error))));
+                    }
                 }
                 _ => {}
             },
@@ -335,6 +487,30 @@ impl NetworkManager {
     /// Get listening addresses
     pub fn listening_addresses(&self) -> Vec<Multiaddr> {
         self.swarm.listeners().cloned().collect()
+    }
+
+    /// Request events from a peer for campaign sync
+    pub async fn sync_campaign_events(
+        &self,
+        campaign_id: CampaignId,
+        from_sequence: u64,
+        to_peer: PeerId,
+    ) -> NetResult<Vec<SignedEvent>> {
+        let (tx, rx) = oneshot::channel();
+        
+        self.command_tx.send(NetworkCommand::SyncCampaignEvents {
+            campaign_id,
+            from_sequence,
+            to_peer,
+            response: tx,
+        }).await.map_err(|_| NetworkError::ChannelClosed)?;
+        
+        rx.await.map_err(|_| NetworkError::ChannelClosed)?
+    }
+
+    /// Send command to network manager
+    pub async fn send_command(&self, cmd: NetworkCommand) -> NetResult<()> {
+        self.command_tx.send(cmd).await.map_err(|_| NetworkError::ChannelClosed)
     }
 }
 

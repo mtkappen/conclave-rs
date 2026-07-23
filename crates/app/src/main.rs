@@ -2,8 +2,10 @@
 
 use clap::{Parser, Subcommand};
 use conclave_core::Identity;
-use conclave_network::NetworkManager;
-use conclave_storage::open_campaign_db;
+use conclave_network::{NetworkManager, CampaignDbHandle};
+use conclave_protocol::{CampaignId, Event, MemberRole, SignedEvent};
+use conclave_storage::{get_max_sequence, open_campaign_db, store_event};
+use ed25519_dalek::SigningKey;
 
 #[derive(Parser)]
 #[command(name = "conclave")]
@@ -152,16 +154,154 @@ async fn main() {
         }
 
         Commands::JoinCampaign { campaign_id, peer_addr } => {
-            println!("Joining campaign {} via {}...", campaign_id, peer_addr);
-            
             let id_path = data_dir.join("identity.json");
             if !id_path.exists() {
                 println!("Error: No identity found. Run 'conclave init' first.");
                 return;
             }
 
-            // TODO: Load identity, create network manager, connect to peer
-            println!("TODO: Connect to peer at {} and sync campaign {}", peer_addr, campaign_id);
+            let identity_json: serde_json::Value = serde_json::from_reader(
+                std::fs::File::open(&id_path).unwrap()
+            ).unwrap();
+            
+            let _identity = Identity::from_json(&identity_json).expect("Failed to load identity");
+
+            // Parse campaign ID
+            let campaign_uuid: CampaignId = campaign_id.parse().expect("Invalid campaign UUID");
+            
+            // Create campaign database if it doesn't exist
+            let db_path = data_dir.join(format!("{}.db", campaign_id));
+            let conn = open_campaign_db(&db_path).expect("Failed to create/open campaign DB");
+
+            println!("Joining campaign {} via {}...", campaign_id, peer_addr);
+            
+            // Get local max sequence (0 if new campaign)
+            let local_max_seq = get_max_sequence(&conn, campaign_uuid).unwrap_or(0);
+            println!("Local has events up to sequence {}", local_max_seq);
+
+            // Parse peer address
+            let addr: libp2p::Multiaddr = format!("/ip4/{}/tcp/{}", 
+                peer_addr.split(':').next().unwrap_or("127.0.0.1"),
+                peer_addr.split(':').nth(1).unwrap_or("7777")
+            ).parse().expect("Invalid peer address");
+
+            // Create network manager and run sync in background
+            tokio::runtime::Runtime::new().unwrap().block_on(async {
+                let mut manager = match NetworkManager::bind(&_identity, 0).await {
+                    Ok(m) => m,
+                    Err(e) => {
+                        eprintln!("Failed to start network: {}", e);
+                        return;
+                    }
+                };
+
+                // Set up campaign DB for serving sync requests
+                manager.set_campaign_db(CampaignDbHandle::new(&db_path));
+
+                println!("Connected as peer {}", manager.local_peer_id());
+                println!("Dialing peer at {}...", addr);
+
+                // Connect to peer
+                let (tx, rx) = tokio::sync::oneshot::channel();
+                manager.send_command(conclave_network::NetworkCommand::Connect { 
+                    addr: addr.clone(), 
+                    response: tx 
+                }).await.unwrap();
+                
+                match rx.await {
+                    Ok(Ok(())) => println!("Connected to peer!"),
+                    Ok(Err(e)) => {
+                        eprintln!("Failed to connect: {}", e);
+                        return;
+                    }
+                    Err(_) => {
+                        eprintln!("Connection channel closed");
+                        return;
+                    }
+                }
+
+                // Wait a bit for connection to establish
+                tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+
+                // Create and broadcast MemberJoined event
+                let identity_json: serde_json::Value = serde_json::from_reader(
+                    std::fs::File::open(&id_path).unwrap()
+                ).unwrap();
+                let identity = Identity::from_json(&identity_json).expect("Failed to load identity");
+                
+                let mut key_bytes = [0u8; 32];
+                key_bytes.copy_from_slice(&identity.signing_key.to_bytes());
+                let signing_key = SigningKey::from_bytes(&key_bytes);
+
+                // Get next sequence number
+                let next_seq = local_max_seq + 1;
+                
+                let member_joined_payload = serde_json::to_value(
+                    Event::MemberJoined {
+                        player_id: identity.player_id(),
+                        display_name: identity.display_name().to_string(),
+                        role: MemberRole::Player,
+                    }
+                ).unwrap();
+
+                let mut joined_event = SignedEvent::new(
+                    next_seq,
+                    campaign_uuid,
+                    next_seq,
+                    identity.player_id(),
+                    member_joined_payload,
+                );
+                joined_event.sign(&signing_key);
+
+                // Store locally
+                store_event(&conn, &joined_event).expect("Failed to store MemberJoined event");
+                println!("Broadcasting MemberJoined event (seq {})", next_seq);
+
+                // Broadcast the event
+                let _ = manager.send_command(conclave_network::NetworkCommand::Broadcast {
+                    event: joined_event,
+                    response: tokio::sync::oneshot::channel().0,
+                }).await;
+
+                // Request events from peer
+                println!("Requesting events from sequence {}...", local_max_seq + 1);
+                
+                let peers = manager.connected_peers();
+                if peers.is_empty() {
+                    eprintln!("No connected peers to sync from");
+                    return;
+                }
+
+                let target_peer = peers[0];
+                match manager.sync_campaign_events(campaign_uuid, local_max_seq + 1, target_peer).await {
+                    Ok(events) => {
+                        println!("Received {} events from peer", events.len());
+                        
+                        for event in &events {
+                            // Verify signature before storing
+                            if !event.verify() {
+                                eprintln!("Warning: Failed to verify event {}", event.id);
+                                continue;
+                            }
+                            
+                            store_event(&conn, event).expect("Failed to store event");
+                            println!("Stored event {} (type: {}, seq: {})", 
+                                event.id, event.event_type, event.sequence_number);
+                        }
+                        
+                        println!("Sync complete! Campaign database updated.");
+                    }
+                    Err(e) => {
+                        eprintln!("Failed to sync events: {}", e);
+                    }
+                }
+
+                // Disconnect and shutdown
+                let _ = manager.send_command(conclave_network::NetworkCommand::Disconnect { 
+                    peer_id: target_peer, 
+                    response: tokio::sync::oneshot::channel().0 
+                }).await;
+            });
         }
 
         Commands::ListCampaigns => {

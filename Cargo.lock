@@ -475,6 +475,7 @@ dependencies = [
  "conclave-protocol",
  "conclave-storage",
  "dirs",
+ "ed25519-dalek",
  "libp2p",
  "rand 0.8.7",
  "rusqlite",

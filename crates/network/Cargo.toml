@@ -6,6 +6,7 @@ edition.workspace = true
 [dependencies]
 conclave-protocol = { path = "../protocol" }
 conclave-core = { path = "../core" }
+conclave-storage = { path = "../storage" }
 tokio = { workspace = true, features = ["full"] }
 thiserror = { workspace = true }
 libp2p = { version = "0.53", features = [

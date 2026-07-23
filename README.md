@@ -55,7 +55,7 @@ Save the seed phrase shown - it's required to recover your identity!
 | `list-campaigns` | List all local campaigns |
 | `join-campaign <id> <peer>` | Join an existing campaign |
 | `leave-campaign <id>` | Leave a campaign |
-| `members <id>` | List campaign members and roles |
+| `members <id>` | List campaign members and roles (local DB) |
 | `transfer-dm <id> <player-id>` | Transfer DM authority |
 | `chat <campaign> <message>` | Send a chat message |
 | `roll <expression> --campaign <id>` | Roll dice (e.g., "2d20+5") |
@@ -64,6 +64,8 @@ Save the seed phrase shown - it's required to recover your identity!
 | `list-plugins` | List all loaded plugins |
 | `status` | Show current system status |
 | `listen --port <port>` | Start network listener |
+| `rpc-members <id> <peer>` | Query remote peer for campaign members |
+| `rpc-info <id> <peer>` | Query remote peer for campaign metadata |
 
 ## Architecture
 

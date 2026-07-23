@@ -67,6 +67,10 @@ enum Commands {
     Roll {
         /// Dice expression (e.g., "2d20+5")
         expression: String,
+
+        /// Campaign ID to record the roll in (optional)
+        #[arg(short, long)]
+        campaign: Option<String>,
     },
 
     /// List connected peers
@@ -113,6 +117,9 @@ enum Commands {
         /// Campaign ID
         campaign_id: String,
     },
+
+    /// Show current status and connected peers
+    Status,
 }
 
 #[tokio::main]
@@ -541,7 +548,7 @@ async fn main() {
             println!("Note: Run 'conclave listen' in background to broadcast events to peers.");
         }
 
-        Commands::Roll { expression } => {
+        Commands::Roll { expression, campaign } => {
             let id_path = data_dir.join("identity.json");
             if !id_path.exists() {
                 println!("Error: No identity found. Run 'conclave init' first.");
@@ -555,13 +562,51 @@ async fn main() {
             let identity = Identity::from_json(&identity_json).expect("Failed to load identity");
 
             let (total, rolls) = roll_dice(&expression);
-
-            let mut key_bytes = [0u8; 32];
-            key_bytes.copy_from_slice(&identity.signing_key.to_bytes());
-            let signing_key = SigningKey::from_bytes(&key_bytes);
-
             println!("Rolled {}: {} (individual: {:?})", expression, total, rolls);
-            println!("Note: Run 'conclave listen' in background to broadcast dice rolls to peers.");
+
+            if let Some(campaign_id) = campaign {
+                let campaign_uuid: CampaignId = campaign_id.parse().expect("Invalid campaign UUID");
+                let db_path = data_dir.join(format!("{}.db", campaign_id));
+                
+                if !db_path.exists() {
+                    eprintln!("Campaign database not found: {}", db_path.display());
+                    return;
+                }
+
+                let conn = open_campaign_db(&db_path).expect("Failed to open campaign DB");
+                let next_seq = get_max_sequence(&conn, campaign_uuid).unwrap_or(0) + 1;
+
+                let mut key_bytes = [0u8; 32];
+                key_bytes.copy_from_slice(&identity.signing_key.to_bytes());
+                let signing_key = SigningKey::from_bytes(&key_bytes);
+
+                let dice_payload = serde_json::to_value(
+                    Event::DiceRolled {
+                        actor: identity.player_id(),
+                        expression: expression.clone(),
+                        result: total,
+                        rolls: rolls.iter().map(|r| *r as i64).collect(),
+                        timestamp: std::time::SystemTime::now()
+                            .duration_since(std::time::SystemTime::UNIX_EPOCH)
+                            .unwrap()
+                            .as_secs(),
+                    }
+                ).unwrap();
+
+                let mut dice_event = SignedEvent::new(
+                    next_seq,
+                    campaign_uuid,
+                    next_seq,
+                    identity.player_id(),
+                    dice_payload,
+                );
+                dice_event.sign(&signing_key);
+
+                store_event(&conn, &dice_event).expect("Failed to store dice roll event");
+                println!("Dice roll recorded in campaign {} (seq {})", campaign_id, next_seq);
+            } else {
+                println!("Note: Use --campaign <id> to record the roll in a campaign.");
+            }
         }
 
         Commands::Peers => {
@@ -677,6 +722,27 @@ async fn main() {
                                 ).ok();
                                 
                                 println!("DM transferred: {} -> {}", from, to);
+                            }
+                        }
+                        
+                        // Handle DiceRolled events for display
+                        if event.event_type == "DiceRolled" {
+                            if let (Some(actor), Some(expr), Some(result)) = (
+                                event.payload.get("payload").and_then(|p| p.get("actor")).and_then(|p| p.as_str()),
+                                event.payload.get("payload").and_then(|p| p.get("expression")).and_then(|p| p.as_str()),
+                                event.payload.get("payload").and_then(|p| p.get("result")).and_then(|p| p.as_i64())
+                            ) {
+                                println!("{} rolled {} = {}", &actor[..8], expr, result);
+                            }
+                        }
+                        
+                        // Handle ChatMessage events for display
+                        if event.event_type == "ChatMessage" {
+                            if let (Some(author), Some(content)) = (
+                                event.payload.get("payload").and_then(|p| p.get("author")).and_then(|p| p.as_str()),
+                                event.payload.get("payload").and_then(|p| p.get("content")).and_then(|p| p.as_str())
+                            ) {
+                                println!("{}: {}", &author[..8], content);
                             }
                         }
                     }
@@ -863,6 +929,59 @@ async fn main() {
                     println!("  - {} ({})", &player_id[..8], role);
                 }
             }
+        }
+
+        Commands::Status => {
+            let id_path = data_dir.join("identity.json");
+            
+            println!("=== Conclave Status ===\n");
+            
+            if !id_path.exists() {
+                println!("Identity: Not configured (run 'conclave init')");
+            } else {
+                let identity_json: serde_json::Value = serde_json::from_reader(
+                    std::fs::File::open(&id_path).unwrap()
+                ).unwrap();
+                
+                let identity = Identity::from_json(&identity_json).expect("Failed to load identity");
+                println!("Identity: {} ({})", identity.display_name(), &identity.player_id()[..8]);
+            }
+
+            // Count campaigns
+            let mut campaign_count = 0;
+            for entry in std::fs::read_dir(&data_dir).unwrap() {
+                if let Ok(entry) = entry {
+                    let name = entry.file_name().into_string().unwrap();
+                    if name.ends_with(".db") {
+                        campaign_count += 1;
+                    }
+                }
+            }
+            println!("Campaigns: {}", campaign_count);
+
+            // Count plugins
+            let plugin_dir = data_dir.join("plugins");
+            let mut plugin_count = 0;
+            if plugin_dir.exists() {
+                for entry in std::fs::read_dir(&plugin_dir).unwrap() {
+                    if let Ok(entry) = entry {
+                        if entry.path().is_dir() {
+                            for plugin in std::fs::read_dir(entry.path()).unwrap() {
+                                if let Ok(p) = plugin {
+                                    if p.path().extension().and_then(|s| s.to_str()) == Some("so") ||
+                                       p.path().extension().and_then(|s| s.to_str()) == Some("dll") ||
+                                       p.path().extension().and_then(|s| s.to_str()) == Some("dylib") {
+                                        plugin_count += 1;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            println!("Plugins: {}", plugin_count);
+
+            println!("\nNetwork: Not listening (run 'conclave listen' to start)");
         }
     }
 }

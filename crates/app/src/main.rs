@@ -2,7 +2,7 @@
 
 use clap::{Parser, Subcommand};
 use conclave_core::Identity;
-use conclave_network::{NetworkManager, CampaignDbHandle};
+use conclave_network::{NetworkManager, CampaignDbHandle, NetworkCommand};
 use conclave_plugin::PluginManager;
 use conclave_protocol::{CampaignId, Event, MemberRole, SignedEvent};
 use conclave_storage::{get_members, get_max_sequence, open_campaign_db, store_event};
@@ -112,10 +112,19 @@ enum Commands {
         target_player_id: String,
     },
 
-    /// List members of a campaign
+    /// List members of a campaign (local database)
     Members {
         /// Campaign ID
         campaign_id: String,
+    },
+
+    /// Query remote peer for campaign members via RPC
+    RpcMembers {
+        /// Campaign ID
+        campaign_id: String,
+
+        /// Peer address to query (host:port)
+        peer_addr: String,
     },
 
     /// Show current status and connected peers
@@ -932,6 +941,104 @@ async fn main() {
                     println!("  - {} ({})", &player_id[..8], role);
                 }
             }
+        }
+
+        Commands::RpcMembers { campaign_id, peer_addr } => {
+            let id_path = data_dir.join("identity.json");
+            if !id_path.exists() {
+                println!("Error: No identity found. Run 'conclave init' first.");
+                return;
+            }
+
+            let identity_json: serde_json::Value = serde_json::from_reader(
+                std::fs::File::open(&id_path).unwrap()
+            ).unwrap();
+            
+            let identity = Identity::from_json(&identity_json).expect("Failed to load identity");
+
+            println!("Querying peer {} for campaign {} members...", peer_addr, campaign_id);
+
+            // Parse peer address
+            let addr: libp2p::Multiaddr = format!("/ip4/{}/tcp/{}", 
+                peer_addr.split(':').next().unwrap_or("127.0.0.1"),
+                peer_addr.split(':').nth(1).unwrap_or("7777")
+            ).parse().expect("Invalid peer address");
+
+            // Create network manager and make RPC call
+            tokio::runtime::Runtime::new().unwrap().block_on(async {
+                let mut manager = match NetworkManager::bind(&identity, 0).await {
+                    Ok(m) => m,
+                    Err(e) => {
+                        eprintln!("Failed to start network: {}", e);
+                        return;
+                    }
+                };
+
+                println!("Connected as peer {}", manager.local_peer_id());
+                println!("Dialing peer at {}...", addr);
+
+                // Connect to peer
+                let (tx, rx) = tokio::sync::oneshot::channel();
+                manager.send_command(NetworkCommand::Connect { 
+                    addr: addr.clone(), 
+                    response: tx 
+                }).await.unwrap();
+                
+                match rx.await {
+                    Ok(Ok(())) => println!("Connected to peer!"),
+                    Ok(Err(e)) => {
+                        eprintln!("Failed to connect: {}", e);
+                        return;
+                    }
+                    Err(_) => {
+                        eprintln!("Connection channel closed");
+                        return;
+                    }
+                }
+
+                // Wait for connection to establish
+                tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+
+                let peers = manager.connected_peers();
+                if peers.is_empty() {
+                    eprintln!("No connected peers");
+                    return;
+                }
+
+                let target_peer = peers[0];
+                
+                // Make RPC call to get members
+                match manager.rpc_call(
+                    target_peer, 
+                    "get_members".to_string(), 
+                    serde_json::json!({"campaign_id": campaign_id})
+                ).await {
+                    Ok(result) => {
+                        if let Some(members) = result.as_array() {
+                            println!("Members of campaign {}:", campaign_id);
+                            for member in members {
+                                if let (Some(pid), Some(role)) = (
+                                    member.get(0).and_then(|v| v.as_str()),
+                                    member.get(1).and_then(|v| v.as_str())
+                                ) {
+                                    println!("  - {} ({})", &pid[..8], role);
+                                }
+                            }
+                        } else {
+                            eprintln!("Unexpected response format");
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("RPC call failed: {}", e);
+                    }
+                }
+
+                // Disconnect and shutdown
+                let _ = manager.send_command(NetworkCommand::Disconnect { 
+                    peer_id: target_peer, 
+                    response: tokio::sync::oneshot::channel().0 
+                }).await;
+            });
         }
 
         Commands::Status => {

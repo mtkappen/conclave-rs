@@ -2,23 +2,32 @@
 
 This folder contains rulebooks and system reference documents (SRDs) for various tabletop RPG systems that can be legally used under open licenses.
 
-## Downloaded Resources
+## Converted Rule Sets
 
 ### Dungeons & Dragons 5th Edition
-- **dnd-5e-srd.pdf** - System Reference Document v5.2.1 (Creative Commons CC-BY-4.0) ✓
+- **dnd-5e-srd.md** - System Reference Document v5.2.1 (Creative Commons CC-BY-4.0) ✓
   - Source: https://www.dndbeyond.com/srd
   - License: Creative Commons Attribution 4.0 International
   - Contains: Core rules, classes, spells, monsters, equipment under open license
-  - File size: ~6MB
-
-
-## Systems to Add
 
 ### Pathfinder 2nd Edition
-- **Status**: Researching download location
-- **License**: Open Gaming License (OGL)
-- **Source**: Archives of Nethys (https://www.archivesofnethys.com/)
-- **Notes**: Full SRD available online, may need to scrape or find PDF export
+- **Pathfinder-2e-core-Rulebook/** - Complete Core Rulebook extraction (Open Gaming License) ✓
+  - Source: Pathfinder 2e Core Rulebook PDF
+  - License: Open Gaming License (OGL)
+  - Contains: All 12 chapters, 374 spells, 30+ backgrounds, all feats, equipment, skills
+  - Structure: Organized by chapter with individual markdown files for each rule/spell
+
+### Lancer
+- **Lancer - Free Version.md** - Free rules PDF conversion ✓
+  - Contains: Core mech rules and system reference
+
+## Downloaded Resources (Raw Files)
+
+### Call of Cthulhu d20
+- **Call of Cthulhu d20 - Core Rulebook.txt** - Raw OCR extraction
+  - Status: Awaiting conversion
+
+## Systems to Add
 
 ### Fate Core System
 - **Status**: Researching download location  
@@ -29,13 +38,6 @@ This folder contains rulebooks and system reference documents (SRDs) for various
 - **Status**: Researching download location
 - **License**: OGL for core rules
 - **Notes**: B/X D&D clone with open license content
-
-### Other Systems to Consider
-- [ ] Blades in the Dark (free basic rules)
-- [ ] Call of Cthulhu (basic rules available)
-- [ ] Shadowrun (some free content)
-- [ ] Warhammer Fantasy Roleplay
-- [ ] World of Darkness / Vampire: The Masquerade
 
 ## Notes for LLM Processing
 
@@ -87,6 +89,7 @@ Examples:
 
 ## Current Status
 
-- D&D 5e SRD downloaded and ready for processing
-- Lancer PDF conversion in progress (user-side)
-- Need to identify working download sources for additional systems
+- ✅ D&D 5e SRD converted to markdown
+- ✅ Pathfinder 2e Core Rulebook fully extracted and organized (374 spells, all chapters)
+- ✅ Lancer PDF converted to markdown
+- ⏳ Call of Cthulhu d20 awaiting conversion

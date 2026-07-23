@@ -343,10 +343,39 @@ CREATE VIRTUAL TABLE rule_embeddings USING vss0(
 
 ## 7. Networking & Sync
 
-### Connection Types
-1. **LAN:** QUIC with automatic discovery (mDNS or similar)
-2. **Internet Direct:** QUIC with public IP/hostname
-3. **Relay Node:** When direct connection not possible (NAT traversal failure)
+### Network Stack: libp2p Framework
+**Decision:** Use libp2p instead of raw QUIC for production-ready P2P with built-in relay support.
+
+**Why libp2p over raw QUIC:**
+- Built-in NAT traversal (hole punching) - no custom implementation needed
+- Built-in relay protocol for remote nodes - maps directly to our node system
+- Peer discovery via DHT and mDNS out of the box
+- Connection pooling and reconnection handled automatically
+- Abstracts away QUIC API complexity and version issues
+
+**Connection Types:**
+1. **LAN:** libp2p with mDNS automatic discovery
+2. **Internet Direct:** libp2p QUIC/TCP with public peer IDs
+3. **Relay Node:** When direct connection fails (NAT/firewall), use optional relay nodes
+
+### Optional Node System
+**Architecture:** Remote nodes for syncing users over long distance (from decentralization-ideas.md)
+
+**Node Capabilities:**
+- Relay traffic between peers that cannot connect directly
+- Store campaign cache (event log subset, not full authority)
+- Synchronize peers when they come online
+- Cache assets for faster distribution
+- Optional transcription service (voice → text)
+- Optional AI features (summaries, NPC extraction, quest tracking)
+
+**Critical Constraint:** The node does NOT own the campaign. It is simply another peer that usually stays online and provides availability improvements without becoming a central server or single point of failure.
+
+**Deployment Model:**
+- Users can run their own relay nodes for their campaigns
+- Community-run public relays available as fallback
+- Clients configured with list of known relay endpoints
+- Direct connections preferred; relays used only when necessary
 
 ### Sync Protocol
 ```
@@ -462,11 +491,13 @@ Update sync_peers table with new last_sync_event_id
 - [ ] Dice roller plugin
 
 ### Phase 3: Networking (Weeks 9-12)
-- [ ] QUIC-based peer connections
-- [ ] LAN discovery
-- [ ] Event synchronization protocol
+- [ ] libp2p setup with TCP/QUIC transports
+- [ ] Peer ID generation from Ed25519 keypairs
+- [ ] LAN discovery via mDNS
+- [ ] Internet connectivity via DHT bootstrap nodes
+- [ ] Event synchronization protocol over libp2p streams
 - [ ] Conflict resolution logic
-- [ ] Relay node implementation
+- [ ] Optional relay node implementation (libp2p-relay)
 
 ### Phase 4: Rule Sets (Weeks 13-16)
 - [ ] Markdown parser for existing rule files
@@ -556,6 +587,37 @@ Checks: Is at least one peer online?
 
 **Key constraint:** Cannot join campaign without at least one online peer to authorize and sync from. This is acceptable - DM should be available for new players to join.
 
+### Networking Stack Decision: libp2p Framework
+
+**Question:** Why libp2p over raw QUIC (quinn)?
+
+**Answer:** libp2p provides production-ready P2P infrastructure that maps directly to our requirements:
+
+| Feature | Raw QUIC | libp2p |
+|---------|----------|--------|
+| Direct P2P connections | ✅ Excellent | ✅ Excellent (uses QUIC underneath) |
+| NAT traversal | ❌ Build from scratch | ✅ Built-in hole punching |
+| Relay nodes | ❌ Custom protocol needed | ✅ `libp2p-relay` built-in |
+| Peer discovery | ❌ Manual mDNS/broadcast | ✅ DHT + mDNS built-in |
+| Connection pooling | ⚠️ Manual implementation | ✅ Automatic |
+
+**Decision:** Use libp2p for production code. For MVP, can start with direct connections only and enable relays later when deploying public nodes - same codebase either way.
+
+**MVP Approach:**
+```rust
+// Direct P2P only for initial testing
+let transport = libp2p::tcp::tokio::Transport::new(...)
+    .or(libp2p::quic::tokio::Transport::new(...));
+
+// Add relay later when needed (no code changes required)
+// let relay_transport = libp2p::relay::Client::new(...);
+```
+
+**Node System Integration:** The optional relay node architecture from decentralization-ideas.md maps directly to libp2p's built-in relay protocol. Nodes can be deployed as:
+1. User-run relays for their own campaigns
+2. Community-maintained public relays
+3. Hybrid model with fallback chain
+
 ---
 
 ## Notes from Architecture Discussion
@@ -572,6 +634,8 @@ Checks: Is at least one peer online?
 - sqlite-vss for vector search (MVP), migrate to embedded Qdrant if needed
 - Force explicit data migration on rule set upgrades
 - P2P plugin distribution with hosted registry fallback
+- libp2p framework for networking (built-in NAT traversal, relay nodes, peer discovery)
+- Optional relay node system for long-distance sync (nodes don't own campaigns)
 
 **Key Insight:** 
 The rule set acts as a "template" that defines required plugin versions. When DM creates campaign with "Pathfinder 2e v1.0", all plugins are locked to versions specified by that rule set manifest. Players must match these versions exactly to join.
@@ -684,9 +748,9 @@ struct AssetTransfer {
 ### Still Open (Decide During Implementation)
 - [ ] Exact plugin ABI function signatures
 - [ ] Event type catalog (complete list for v1)
-- [ ] QUIC library choice (quinn vs tokio-quic)
 - [ ] Tauri commands for plugin ↔ core communication
 - [ ] Test strategy for P2P sync scenarios
+- [ ] Node deployment model: self-hosted vs public relays vs hybrid
 
 ### MVP Definition of Done
 - [ ] Two instances can connect on LAN
@@ -717,8 +781,9 @@ conclave-rs/
 │   ├── core/                     # Game engine, event system
 │   ├── protocol/                 # Event definitions, serialization
 │   ├── storage/                  # SQLite layer, migrations
-│   ├── network/                  # QUIC, sync protocol
+│   ├── network/                  # libp2p, sync protocol
 │   ├── plugin/                   # Plugin loader, ABI
+│   ├── node/                     # Optional relay node (Phase 3+)
 │   └── app/                      # Tauri desktop app
 └── plugins/                      # Example plugins (TODO)
     ├── dice-roller/
@@ -844,7 +909,7 @@ Peer A ↔ Peer B handshake:
 
 | Purpose | Options | Recommendation |
 |---------|---------|----------------|
-| QUIC | `quinn`, `tokio-quic` | `quinn` (active, good docs) |
+| P2P Framework | `libp2p`, custom QUIC | `libp2p` (built-in relay, NAT traversal, discovery) |
 | SQLite | `rusqlite`, `sqlx` | `rusqlite` + migrations crate |
 | Serialization | `serde`, `bincode` | `serde` + `serde_json` |
 | Plugin loading | `libloading` | `libloading` (cross-platform dlopen) |
@@ -852,7 +917,14 @@ Peer A ↔ Peer B handshake:
 | UUIDs | `uuid` | `uuid` with serde support |
 | Crypto | `ed25519-dalek`, `ring` | `ed25519-dalek` (simple API) |
 | BIP-39 | `bip39` | `bip39` crate |
-| mDNS | `if-watch`, `mdns-sd` | `mdns-sd` (bonjour/avahi) |
+
+**libp2p sub-crates:**
+- `libp2p-identity` - Peer ID management from Ed25519 keypairs
+- `libp2p-tcp`, `libp2p-quic` - Transport protocols
+- `libp2p-dns` - Service discovery (mDNS)
+- `libp2p-relay` - Relay nodes for NAT traversal (Phase 3+)
+- `libp2p-request-response` - RPC-style communication
+- `libp2p-stream` - Custom event sync protocol
 
 ### What's NOT in MVP
 
@@ -863,6 +935,7 @@ Peer A ↔ Peer B handshake:
 - [ ] Asset transfer (chunked file sync - Phase 5)
 - [ ] Code signing infrastructure (add before public release)
 - [ ] Plugin registry website (manual .so/.dylib files for now)
+- [ ] Relay node system (direct P2P only for MVP, libp2p-relay deferred to Phase 3+)
 
 ### MVP Timeline Estimate
 

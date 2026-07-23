@@ -3,6 +3,7 @@
 use clap::{Parser, Subcommand};
 use conclave_core::Identity;
 use conclave_network::{NetworkManager, CampaignDbHandle};
+use conclave_plugin::PluginManager;
 use conclave_protocol::{CampaignId, Event, MemberRole, SignedEvent};
 use conclave_storage::{get_max_sequence, open_campaign_db, store_event};
 use ed25519_dalek::SigningKey;
@@ -79,6 +80,24 @@ enum Commands {
 
     /// Start network listener (background mode)
     Listen,
+
+    /// Load a plugin for a campaign
+    LoadPlugin {
+        /// Campaign ID
+        campaign_id: String,
+
+        /// Path to plugin library (.so, .dll, or .dylib)
+        path: String,
+    },
+
+    /// Unload a plugin
+    UnloadPlugin {
+        /// Plugin name
+        name: String,
+    },
+
+    /// List loaded plugins
+    ListPlugins,
 }
 
 #[tokio::main]
@@ -263,6 +282,68 @@ async fn main() {
                     response: tokio::sync::oneshot::channel().0,
                 }).await;
 
+                // Load campaign-specific plugins
+                let plugin_dir = data_dir.join("plugins").join(&campaign_id);
+                if plugin_dir.exists() {
+                    println!("Loading campaign plugins from {:?}", plugin_dir);
+                    
+                    let plugin_manager = PluginManager::new();
+                    
+                    for entry in std::fs::read_dir(&plugin_dir).unwrap() {
+                        let entry = entry.unwrap();
+                        let path = entry.path();
+                        
+                        if path.extension().and_then(|s| s.to_str()) == Some("so") ||
+                           path.extension().and_then(|s| s.to_str()) == Some("dll") ||
+                           path.extension().and_then(|s| s.to_str()) == Some("dylib") {
+                            
+                            let ctx = conclave_plugin::PluginContext::new(&campaign_id, &identity.player_id());
+                            match plugin_manager.load_plugin_with_context(&path, ctx) {
+                                Ok(name) => {
+                                    println!("Loaded plugin: {} v{}", name, 
+                                        plugin_manager.list_plugins().iter()
+                                            .find(|(n, _)| n == &name)
+                                            .map(|(_, v)| v.as_str())
+                                            .unwrap_or("unknown")
+                                    );
+
+                                    // Broadcast PluginLoaded event
+                                    let mut plugin_seq = next_seq;
+                                    plugin_seq += 1;
+
+                                    let plugin_loaded_payload = serde_json::to_value(
+                                        Event::PluginLoaded {
+                                            plugin_name: name.clone(),
+                                            version: plugin_manager.list_plugins()
+                                                .iter()
+                                                .find(|(n, _)| n == &name)
+                                                .map(|(_, v)| v.clone())
+                                                .unwrap_or_default(),
+                                        }
+                                    ).unwrap();
+
+                                    let mut plugin_event = SignedEvent::new(
+                                        plugin_seq,
+                                        campaign_uuid,
+                                        plugin_seq,
+                                        identity.player_id(),
+                                        plugin_loaded_payload,
+                                    );
+                                    plugin_event.sign(&signing_key);
+
+                                    store_event(&conn, &plugin_event).expect("Failed to store PluginLoaded event");
+                                    
+                                    let _ = manager.send_command(conclave_network::NetworkCommand::Broadcast {
+                                        event: plugin_event,
+                                        response: tokio::sync::oneshot::channel().0,
+                                    }).await;
+                                }
+                                Err(e) => eprintln!("Failed to load plugin {:?}: {}", path, e),
+                            }
+                        }
+                    }
+                }
+
                 // Request events from peer
                 println!("Requesting events from sequence {}...", local_max_seq + 1);
                 
@@ -388,6 +469,71 @@ async fn main() {
 
             tokio::signal::ctrl_c().await.unwrap();
             println!("\nShutting down...");
+        }
+
+        Commands::LoadPlugin { campaign_id, path } => {
+            let id_path = data_dir.join("identity.json");
+            if !id_path.exists() {
+                println!("Error: No identity found. Run 'conclave init' first.");
+                return;
+            }
+
+            let identity_json: serde_json::Value = serde_json::from_reader(
+                std::fs::File::open(&id_path).unwrap()
+            ).unwrap();
+            
+            let identity = Identity::from_json(&identity_json).expect("Failed to load identity");
+
+            let plugin_dir = data_dir.join("plugins").join(&campaign_id);
+            std::fs::create_dir_all(&plugin_dir).expect("Failed to create plugin directory");
+
+            let manager = PluginManager::new();
+            
+            let ctx = conclave_plugin::PluginContext::new(&campaign_id, &identity.player_id());
+            
+            match manager.load_plugin_with_context(&path, ctx) {
+                Ok(name) => {
+                    println!("Loaded plugin: {} v{}", name, 
+                        manager.list_plugins().iter()
+                            .find(|(n, _)| n == &name)
+                            .map(|(_, v)| v.as_str())
+                            .unwrap_or("unknown")
+                    );
+
+                    manager.associate_with_campaign(&campaign_id, &name)
+                        .expect("Failed to associate plugin with campaign");
+
+                    let plugins = manager.get_campaign_plugins(&campaign_id);
+                    println!("Plugin associated with campaign {}. Active plugins: {:?}", 
+                        campaign_id, plugins);
+                }
+                Err(e) => {
+                    eprintln!("Failed to load plugin: {}", e);
+                }
+            }
+        }
+
+        Commands::UnloadPlugin { name } => {
+            let manager = PluginManager::new();
+            
+            match manager.unload_plugin(&name) {
+                Ok(()) => println!("Unloaded plugin: {}", name),
+                Err(e) => eprintln!("Failed to unload plugin: {}", e),
+            }
+        }
+
+        Commands::ListPlugins => {
+            let manager = PluginManager::new();
+            let plugins = manager.list_plugins();
+            
+            if plugins.is_empty() {
+                println!("No plugins loaded.");
+            } else {
+                println!("Loaded plugins:");
+                for (name, version) in plugins {
+                    println!("  - {} v{}", name, version);
+                }
+            }
         }
     }
 }

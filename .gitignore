@@ -1,0 +1,6 @@
+target/
+planning/rules/*-Free-Version.md
+planning/rules/*.txt
+planning/rules/*_fixed.md
+planning/rules/*_preview.md
+planning/rules/*cleaned-full.txt

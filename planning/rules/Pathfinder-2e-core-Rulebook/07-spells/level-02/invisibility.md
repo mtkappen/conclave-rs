@@ -1,14 +1,15 @@
-# INVISIBILITY
+# Invisibility Spell 2
 
-## Spell 2 - Illusion
+**Illusion**
 
-**Traditions:** arcane, occult  
-**Cast:** [two-actions] material, somatic, verbal  
-**Range:** touch; **Targets:** 1 creature  
-**Duration:** 10 minutes  
+**Traditions:** arcane, occult
 
-The target is invisible. While exploring, it's easy to move slowly and remain invisible. This is untenable in a battle, however. Once an encounter begins, creatures remain invisible until at most the end of the first round, at which point the spell ends.
+**Cast:** [two-actions] material, somatic
 
-If the target uses a hostile action, the spell ends after the hostile action is completed.
+**Range:** touch; **Targets:** 1 creature
 
-**Heightened (5th):** The duration increases to 1 hour.
+**Duration:** 10 minutes
+
+Cloaked in illusion, the target becomes invisible. This makes it undetected to all creatures, though the creatures can attempt to find the target, making it hidden to them instead (page 466). If the target uses a hostile action, the spell ends after that hostile action is completed.
+
+**Heightened (4th)** The spell lasts 1 minute, but it doesn't end if the target uses a hostile action.

@@ -1,10 +1,13 @@
-# CLAIRVOYANCE
+# Clairvoyance Spell 4
 
-## Spell 4 - Divination Scrying
+**Divination Scrying**
 
-**Traditions:** arcane, occult  
-**Cast:** 1 minute (material, somatic, verbal)  
-**Range:** 500 feet  
-**Duration:** 10 minutes  
+**Traditions:** arcane, occult
 
-You create an invisible floating eye at a location within range (even if it's outside your line of sight or line of effect). The eye can't move, but you can see in all directions from that point as if using your normal visual senses.
+**Cast:** 1 minute (material, somatic, verbal)
+
+**Range:** 500 feet
+
+**Duration:** 10 minutes
+
+You create an invisible sensor at a location you are familiar with or that you can see. The sensor remains in place for the duration and can't be attacked or otherwise interacted with. You can use an action to see through the sensor as if you were there, or hear through it. You can switch between seeing and hearing as a free action.

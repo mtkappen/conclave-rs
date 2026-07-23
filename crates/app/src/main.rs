@@ -5,7 +5,7 @@ use conclave_core::Identity;
 use conclave_network::{NetworkManager, CampaignDbHandle};
 use conclave_plugin::PluginManager;
 use conclave_protocol::{CampaignId, Event, MemberRole, SignedEvent};
-use conclave_storage::{get_max_sequence, open_campaign_db, store_event};
+use conclave_storage::{get_members, get_max_sequence, open_campaign_db, store_event};
 use ed25519_dalek::SigningKey;
 
 #[derive(Parser)]
@@ -98,6 +98,15 @@ enum Commands {
 
     /// List loaded plugins
     ListPlugins,
+
+    /// Transfer DM authority to another player
+    TransferDm {
+        /// Campaign ID
+        campaign_id: String,
+
+        /// Target player ID (recipient's public key hex)
+        target_player_id: String,
+    },
 }
 
 #[tokio::main]
@@ -274,6 +283,15 @@ async fn main() {
 
                 // Store locally
                 store_event(&conn, &joined_event).expect("Failed to store MemberJoined event");
+                
+                // Add member to members table
+                conclave_storage::add_member(
+                    &conn, 
+                    campaign_uuid, 
+                    identity.player_id(), 
+                    format!("{:?}", MemberRole::Player)
+                ).expect("Failed to add member");
+                
                 println!("Broadcasting MemberJoined event (seq {})", next_seq);
 
                 // Broadcast the event
@@ -559,7 +577,49 @@ async fn main() {
                 }
 
                 match conclave_storage::store_event(&conn, &event) {
-                    Ok(()) => println!("Stored event {} (seq {})", event.id, event.sequence_number),
+                    Ok(()) => {
+                        println!("Stored event {} (seq {})", event.id, event.sequence_number);
+                        
+                        // Handle MemberJoined events to update members table
+                        if event.event_type == "MemberJoined" {
+                            if let Some(player_id) = event.payload.get("payload")
+                                .and_then(|p| p.get("player_id"))
+                                .and_then(|p| p.as_str()) 
+                            {
+                                if let Some(role_str) = event.payload.get("payload")
+                                    .and_then(|p| p.get("role"))
+                                    .and_then(|r| r.as_str())
+                                {
+                                    let role = format!("\"{}\"", role_str);
+                                    conn.execute(
+                                        "INSERT OR REPLACE INTO members (campaign_id, player_id, role, joined_at) VALUES (?1, ?2, ?3, ?4)",
+                                        rusqlite::params![event.campaign_id.to_string(), player_id, role_str, chrono::Utc::now().timestamp()],
+                                    ).ok();
+                                    println!("Added member: {} ({})", player_id, role_str);
+                                }
+                            }
+                        }
+                        
+                        // Handle DmTransferred events to update roles
+                        if event.event_type == "DmTransferred" {
+                            if let (Some(from), Some(to)) = (
+                                event.payload.get("payload").and_then(|p| p.get("from")).and_then(|p| p.as_str()),
+                                event.payload.get("payload").and_then(|p| p.get("to")).and_then(|p| p.as_str())
+                            ) {
+                                conn.execute(
+                                    "UPDATE members SET role = ?1 WHERE campaign_id = ?2 AND player_id = ?3",
+                                    rusqlite::params!["Player", event.campaign_id.to_string(), from],
+                                ).ok();
+                                
+                                conn.execute(
+                                    "INSERT OR REPLACE INTO members (campaign_id, player_id, role, joined_at) VALUES (?1, ?2, ?3, ?4)",
+                                    rusqlite::params![event.campaign_id.to_string(), to, "Dm", chrono::Utc::now().timestamp()],
+                                ).ok();
+                                
+                                println!("DM transferred: {} -> {}", from, to);
+                            }
+                        }
+                    }
                     Err(e) => eprintln!("Failed to store event: {}", e),
                 }
             });
@@ -647,6 +707,79 @@ async fn main() {
                     println!("  - {} v{}", name, version);
                 }
             }
+        }
+
+        Commands::TransferDm { campaign_id, target_player_id } => {
+            let id_path = data_dir.join("identity.json");
+            if !id_path.exists() {
+                println!("Error: No identity found. Run 'conclave init' first.");
+                return;
+            }
+
+            let identity_json: serde_json::Value = serde_json::from_reader(
+                std::fs::File::open(&id_path).unwrap()
+            ).unwrap();
+            
+            let identity = Identity::from_json(&identity_json).expect("Failed to load identity");
+
+            // Verify current user is DM by checking members table
+            let campaign_uuid: CampaignId = campaign_id.parse().expect("Invalid campaign UUID");
+            let db_path = data_dir.join(format!("{}.db", campaign_id));
+            
+            if !db_path.exists() {
+                eprintln!("Campaign database not found: {}", db_path.display());
+                return;
+            }
+
+            let conn = open_campaign_db(&db_path).expect("Failed to open campaign DB");
+            let members = get_members(&conn, campaign_uuid).expect("Failed to get members");
+            
+            let current_is_dm = members.iter().any(|(pid, role)| 
+                pid == &identity.player_id() && role == "Dm"
+            );
+
+            if !current_is_dm {
+                eprintln!("Error: Only the current DM can transfer authority.");
+                return;
+            }
+
+            let next_seq = get_max_sequence(&conn, campaign_uuid).unwrap_or(0) + 1;
+
+            let mut key_bytes = [0u8; 32];
+            key_bytes.copy_from_slice(&identity.signing_key.to_bytes());
+            let signing_key = SigningKey::from_bytes(&key_bytes);
+
+            let transfer_payload = serde_json::to_value(
+                Event::DmTransferred {
+                    from: identity.player_id(),
+                    to: target_player_id.clone(),
+                }
+            ).unwrap();
+
+            let mut transfer_event = SignedEvent::new(
+                next_seq,
+                campaign_uuid,
+                next_seq,
+                identity.player_id(),
+                transfer_payload,
+            );
+            transfer_event.sign(&signing_key);
+
+            store_event(&conn, &transfer_event).expect("Failed to store DM transfer event");
+            
+            // Update roles in members table
+            conn.execute(
+                "UPDATE members SET role = ?1 WHERE player_id = ?2",
+                rusqlite::params!["Player", identity.player_id()],
+            ).ok();
+            
+            conn.execute(
+                "INSERT OR REPLACE INTO members (campaign_id, player_id, role, joined_at) VALUES (?1, ?2, ?3, ?4)",
+                rusqlite::params![campaign_id, target_player_id, "Dm", chrono::Utc::now().timestamp()],
+            ).ok();
+
+            println!("DM authority transferred to {}", target_player_id);
+            println!("Note: Run 'conclave listen' in background to broadcast transfer to peers.");
         }
     }
 }

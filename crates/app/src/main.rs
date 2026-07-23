@@ -172,18 +172,50 @@ async fn main() {
             let player_id = identity.player_id();
 
             // Create campaign database
-            let campaign_id = uuid::Uuid::new_v4();
-            let db_path = data_dir.join(format!("{}.db", campaign_id));
+            let campaign_uuid = uuid::Uuid::new_v4();
+            let db_path = data_dir.join(format!("{}.db", campaign_uuid));
             
             let conn = open_campaign_db(&db_path).expect("Failed to create campaign DB");
             
             // Insert campaign record
             conn.execute(
                 "INSERT INTO campaigns (id, name, dm_id, rule_set, created_at) VALUES (?1, ?2, ?3, ?4, ?5)",
-                rusqlite::params![campaign_id.to_string(), name, player_id, rule_set, chrono::Utc::now().timestamp()],
+                rusqlite::params![campaign_uuid.to_string(), name, player_id, rule_set, chrono::Utc::now().timestamp()],
             ).expect("Failed to insert campaign");
 
-            println!("Campaign created: {}", campaign_id);
+            // Add DM as first member
+            conclave_storage::add_member(
+                &conn, 
+                campaign_uuid, 
+                player_id.clone(), 
+                format!("{:?}", MemberRole::Dm)
+            ).expect("Failed to add DM as member");
+
+            // Create and store CampaignCreated event
+            let mut key_bytes = [0u8; 32];
+            key_bytes.copy_from_slice(&identity.signing_key.to_bytes());
+            let signing_key = SigningKey::from_bytes(&key_bytes);
+
+            let campaign_created_payload = serde_json::to_value(
+                Event::CampaignCreated {
+                    dm_id: player_id.clone(),
+                    name: name.clone(),
+                    rule_set,
+                }
+            ).unwrap();
+
+            let mut campaign_event = SignedEvent::new(
+                1,
+                campaign_uuid,
+                1,
+                player_id.clone(),
+                campaign_created_payload,
+            );
+            campaign_event.sign(&signing_key);
+
+            store_event(&conn, &campaign_event).expect("Failed to store CampaignCreated event");
+
+            println!("Campaign created: {}", campaign_uuid);
             println!("Share this ID with players so they can join.");
         }
 

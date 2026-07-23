@@ -8,6 +8,10 @@ use conclave_storage::open_campaign_db;
 #[command(name = "conclave")]
 #[command(about = "Decentralized virtual tabletop for TTRPGs")]
 struct Cli {
+    /// Network port to listen on (default: 7777)
+    #[arg(short, long, default_value = "7777")]
+    port: u16,
+
     #[command(subcommand)]
     command: Commands,
 }
@@ -62,10 +66,20 @@ enum Commands {
     },
 
     /// List connected peers
-    ListPeers,
+    Peers,
+
+    /// Connect to a peer manually
+    Connect {
+        /// Peer address (e.g., /ip4/192.168.1.100/tcp/7777)
+        addr: String,
+    },
+
+    /// Start network listener (background mode)
+    Listen,
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let cli = Cli::parse();
     let data_dir = dirs::data_dir().unwrap().join("conclave");
     std::fs::create_dir_all(&data_dir).expect("Failed to create data directory");
@@ -140,14 +154,13 @@ fn main() {
         Commands::JoinCampaign { campaign_id, peer_addr } => {
             println!("Joining campaign {} via {}...", campaign_id, peer_addr);
             
-            // TODO: Implement actual network connection and sync
-            
             let id_path = data_dir.join("identity.json");
             if !id_path.exists() {
                 println!("Error: No identity found. Run 'conclave init' first.");
                 return;
             }
 
+            // TODO: Load identity, create network manager, connect to peer
             println!("TODO: Connect to peer at {} and sync campaign {}", peer_addr, campaign_id);
         }
 
@@ -173,9 +186,37 @@ fn main() {
             println!("Rolling {}: {}", expression, roll_dice(&expression));
         }
 
-        Commands::ListPeers => {
-            println!("No peers connected yet.");
-            // TODO: Implement peer discovery
+        Commands::Peers => {
+            println!("Network feature not yet active. Use 'conclave listen' to start networking.");
+        }
+
+        Commands::Connect { addr } => {
+            println!("Connecting to peer at {}...", addr);
+            // TODO: Implement actual connection using NetworkManager
+            println!("TODO: Parse address and dial peer");
+        }
+
+        Commands::Listen => {
+            println!("Starting network listener on port {}...", cli.port);
+            
+            let id_path = data_dir.join("identity.json");
+            if !id_path.exists() {
+                println!("Error: No identity found. Run 'conclave init' first.");
+                return;
+            }
+
+            // Load identity for now (simplified - in production use proper key storage)
+            let identity_json: serde_json::Value = serde_json::from_reader(
+                std::fs::File::open(&id_path).unwrap()
+            ).unwrap();
+            
+            println!("Player ID: {}", identity_json["player_id"]);
+            println!("\nPress Ctrl+C to stop listening...\n");
+
+            // TODO: Create and run NetworkManager
+            // This is a placeholder - actual implementation requires proper identity key loading
+            tokio::signal::ctrl_c().await.unwrap();
+            println!("\nShutting down...");
         }
     }
 }

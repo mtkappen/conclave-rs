@@ -1,0 +1,15 @@
+[package]
+name = "conclave-node"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+conclave-core = { path = "../core" }
+conclave-protocol = { path = "../protocol" }
+conclave-storage = { path = "../storage" }
+conclave-network = { path = "../network" }
+tokio = { workspace = true, features = ["full"] }
+thiserror = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+tracing = "0.1"

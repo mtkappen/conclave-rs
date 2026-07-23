@@ -257,8 +257,12 @@ async fn test_event_sync_request_response() {
     assert_eq!(max_seq, 3);
 
     // Bind both network managers
-    let manager1 = NetworkManager::bind(&identity1, 0).await.unwrap();
+    let mut manager1 = NetworkManager::bind(&identity1, 0).await.unwrap();
     let manager2 = NetworkManager::bind(&identity2, 0).await.unwrap();
+
+    // Set up campaign DB for manager1 to serve sync requests
+    use conclave_network::CampaignDbHandle;
+    manager1.set_campaign_db(CampaignDbHandle::new(db_path1));
 
     // Get manager1's address and connect from manager2
     let addrs = manager1.listening_addresses();
@@ -288,13 +292,152 @@ async fn test_event_sync_request_response() {
         // Should receive the 3 events we stored
         match sync_result {
             Ok(events) => {
-                // Note: Currently returns empty because peer 1 doesn't have storage integration yet
-                // This test verifies the request/response mechanism works
-                println!("Received {} events from sync", events.len());
+                assert_eq!(events.len(), 3);
+                for event in &events {
+                    assert!(event.verify());
+                }
             }
-            Err(e) => {
-                eprintln!("Sync failed (expected until storage is wired): {}", e);
-            }
+            Err(e) => panic!("Sync failed: {}", e),
         }
     }
+}
+
+/// Test MemberJoined event flow: player joins campaign and event is stored
+#[tokio::test]
+async fn test_member_joined_event() {
+    use conclave_storage::{store_event, open_campaign_db, add_member};
+    use tempfile::TempDir;
+
+    let identity = Identity::generate("New Player".to_string()).unwrap();
+    
+    // Create temporary database
+    let temp_dir = TempDir::new().unwrap();
+    let db_path = temp_dir.path().join("campaign.db");
+    let conn = open_campaign_db(&db_path).unwrap();
+
+    let campaign_id = uuid::Uuid::new_v4();
+    let player_id = identity.player_id();
+    
+    // Create campaign record
+    conn.execute(
+        "INSERT INTO campaigns (id, name, dm_id, rule_set, created_at) VALUES (?1, ?2, ?3, ?4, ?5)",
+        rusqlite::params![
+            campaign_id.to_string(),
+            "Test Campaign",
+            player_id.clone(),
+            Option::<String>::None,
+            chrono::Utc::now().timestamp()
+        ],
+    ).unwrap();
+    
+    // Create and sign MemberJoined event
+    use ed25519_dalek::SigningKey;
+    let mut key_bytes = [0u8; 32];
+    key_bytes.copy_from_slice(&identity.signing_key.to_bytes());
+    let signing_key = SigningKey::from_bytes(&key_bytes);
+    
+    let event_payload = serde_json::to_value(
+        Event::MemberJoined {
+            player_id: player_id.clone(),
+            display_name: "New Player".to_string(),
+            role: conclave_protocol::MemberRole::Player,
+        }
+    ).unwrap();
+    
+    let mut signed_event = SignedEvent::new(
+        1,
+        campaign_id,
+        1,
+        player_id.clone(),
+        event_payload,
+    );
+    signed_event.sign(&signing_key);
+
+    // Store event and add member
+    store_event(&conn, &signed_event).unwrap();
+    add_member(&conn, campaign_id, player_id.clone(), "Player".to_string()).unwrap();
+
+    // Verify event was stored correctly
+    let events = conclave_storage::get_events_up_to(&conn, campaign_id, 10).unwrap();
+    assert_eq!(events.len(), 1);
+    assert_eq!(events[0].event_type, "MemberJoined");
+    assert!(events[0].verify());
+
+    // Verify member was added
+    let members = conclave_storage::get_members(&conn, campaign_id).unwrap();
+    assert_eq!(members.len(), 1);
+    assert_eq!(members[0].0, player_id);
+    assert_eq!(members[0].1, "Player");
+}
+
+/// Test MemberLeft event flow: player leaves campaign
+#[tokio::test]
+async fn test_member_left_event() {
+    use conclave_storage::{store_event, open_campaign_db, add_member};
+    use tempfile::TempDir;
+
+    let identity = Identity::generate("Leaving Player".to_string()).unwrap();
+    
+    // Create temporary database
+    let temp_dir = TempDir::new().unwrap();
+    let db_path = temp_dir.path().join("campaign.db");
+    let conn = open_campaign_db(&db_path).unwrap();
+
+    let campaign_id = uuid::Uuid::new_v4();
+    let player_id = identity.player_id();
+    
+    // Create campaign record and add member
+    conn.execute(
+        "INSERT INTO campaigns (id, name, dm_id, rule_set, created_at) VALUES (?1, ?2, ?3, ?4, ?5)",
+        rusqlite::params![
+            campaign_id.to_string(),
+            "Test Campaign",
+            player_id.clone(),
+            Option::<String>::None,
+            chrono::Utc::now().timestamp()
+        ],
+    ).unwrap();
+    
+    add_member(&conn, campaign_id, player_id.clone(), "Player".to_string()).unwrap();
+
+    // Verify member exists
+    let members = conclave_storage::get_members(&conn, campaign_id).unwrap();
+    assert_eq!(members.len(), 1);
+
+    // Create and sign MemberLeft event
+    use ed25519_dalek::SigningKey;
+    let mut key_bytes = [0u8; 32];
+    key_bytes.copy_from_slice(&identity.signing_key.to_bytes());
+    let signing_key = SigningKey::from_bytes(&key_bytes);
+    
+    let event_payload = serde_json::to_value(
+        Event::MemberLeft {
+            player_id: player_id.clone(),
+        }
+    ).unwrap();
+    
+    let mut signed_event = SignedEvent::new(
+        1,
+        campaign_id,
+        1,
+        player_id.clone(),
+        event_payload,
+    );
+    signed_event.sign(&signing_key);
+
+    // Store event and remove member
+    store_event(&conn, &signed_event).unwrap();
+    conn.execute(
+        "DELETE FROM members WHERE campaign_id = ?1 AND player_id = ?2",
+        rusqlite::params![campaign_id.to_string(), player_id],
+    ).unwrap();
+
+    // Verify event was stored
+    let events = conclave_storage::get_events_up_to(&conn, campaign_id, 10).unwrap();
+    assert_eq!(events.len(), 1);
+    assert_eq!(events[0].event_type, "MemberLeft");
+
+    // Verify member was removed
+    let members = conclave_storage::get_members(&conn, campaign_id).unwrap();
+    assert_eq!(members.len(), 0);
 }

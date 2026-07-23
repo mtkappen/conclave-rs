@@ -1,10 +1,10 @@
 # Phantasmal Killer
 
-**Level:** 4  
-**Traditions:** Arcane, Occult  
-**Cast:** [two-actions] somatic, verbal  
-**Range:** 120 feet; Targets: 1 living creature  
-**Saving Throw:** Will  
+**Spell Level** 4  
+**Traditions** Arcane, Occult  
+**Cast** [two-actions] somatic, verbal  
+**Range** 120 feet; **Targets** 1 living creature  
+**Saving Throw** Will  
 
 You create a phantasmal image of the most fearsome creature imaginable to the target. Only the spell's target can see the killer, though you can see the vague shape of the illusion as it races forth to attack. The effect of the killer is based on the outcome of the target's Will save.
 

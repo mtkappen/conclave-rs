@@ -11,8 +11,11 @@ use libp2p::swarm::SwarmEvent;
 use libp2p::{identify, mdns, ping, Multiaddr, PeerId};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
+use std::sync::Arc;
 use tokio::sync::{mpsc, oneshot};
 use tracing::{debug, error, info, warn};
+
+pub type EventCallback = Arc<dyn Fn(SignedEvent) + Send + Sync>;
 
 struct PendingSyncRequest {
     campaign_id: CampaignId,
@@ -204,6 +207,7 @@ pub struct NetworkManager {
     connected_peers: HashSet<PeerId>,
     pending_sync_requests: HashMap<OutboundRequestId, PendingSyncRequest>,
     campaign_db: Option<CampaignDbHandle>,
+    event_callback: Option<EventCallback>,
 }
 
 impl NetworkManager {
@@ -268,7 +272,16 @@ impl NetworkManager {
             connected_peers: HashSet::new(),
             pending_sync_requests: HashMap::new(),
             campaign_db: None,
+            event_callback: None,
         })
+    }
+
+    /// Set callback for incoming events
+    pub fn set_event_callback<F>(&mut self, callback: F)
+    where
+        F: Fn(SignedEvent) + Send + Sync + 'static,
+    {
+        self.event_callback = Some(Arc::new(callback));
     }
 
     /// Set the campaign database for serving sync requests
@@ -423,6 +436,10 @@ impl NetworkManager {
                             }
                             NetworkRequest::Broadcast(event) => {
                                 info!("Received broadcast event {} from {}", event.id, peer);
+                                
+                                if let Some(cb) = &self.event_callback {
+                                    cb(event.clone());
+                                }
                                 
                                 let response = NetworkResponse::Ack;
                                 let _ = self.swarm.behaviour_mut().event_sync.send_response(channel, response);

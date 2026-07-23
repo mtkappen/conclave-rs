@@ -399,12 +399,91 @@ async fn main() {
         }
 
         Commands::Chat { campaign, message } => {
-            println!("Sending chat to '{}': {}", campaign, message);
-            // TODO: Load campaign DB and insert event
+            let id_path = data_dir.join("identity.json");
+            if !id_path.exists() {
+                println!("Error: No identity found. Run 'conclave init' first.");
+                return;
+            }
+
+            let identity_json: serde_json::Value = serde_json::from_reader(
+                std::fs::File::open(&id_path).unwrap()
+            ).unwrap();
+            
+            let identity = Identity::from_json(&identity_json).expect("Failed to load identity");
+
+            // Parse campaign ID from name (for MVP, assume campaign filename is the UUID)
+            let campaign_uuid: CampaignId = match campaign.parse() {
+                Ok(id) => id,
+                Err(_) => {
+                    eprintln!("Invalid campaign ID format. Use the full UUID.");
+                    return;
+                }
+            };
+
+            let db_path = data_dir.join(format!("{}.db", campaign));
+            if !db_path.exists() {
+                eprintln!("Campaign database not found: {}", db_path.display());
+                return;
+            }
+
+            let conn = open_campaign_db(&db_path).expect("Failed to open campaign DB");
+
+            // Get next sequence number
+            let next_seq = get_max_sequence(&conn, campaign_uuid).unwrap_or(0) + 1;
+
+            let mut key_bytes = [0u8; 32];
+            key_bytes.copy_from_slice(&identity.signing_key.to_bytes());
+            let signing_key = SigningKey::from_bytes(&key_bytes);
+
+            let chat_payload = serde_json::to_value(
+                Event::ChatMessage {
+                    author: identity.player_id(),
+                    content: message.clone(),
+                    character_name: None,
+                    timestamp: std::time::SystemTime::now()
+                        .duration_since(std::time::SystemTime::UNIX_EPOCH)
+                        .unwrap()
+                        .as_secs(),
+                }
+            ).unwrap();
+
+            let mut chat_event = SignedEvent::new(
+                next_seq,
+                campaign_uuid,
+                next_seq,
+                identity.player_id(),
+                chat_payload,
+            );
+            chat_event.sign(&signing_key);
+
+            store_event(&conn, &chat_event).expect("Failed to store chat event");
+            println!("Chat message stored locally (seq {})", next_seq);
+
+            // Broadcast if we have a running network manager
+            println!("Note: Run 'conclave listen' in background to broadcast events to peers.");
         }
 
         Commands::Roll { expression } => {
-            println!("Rolling {}: {}", expression, roll_dice(&expression));
+            let id_path = data_dir.join("identity.json");
+            if !id_path.exists() {
+                println!("Error: No identity found. Run 'conclave init' first.");
+                return;
+            }
+
+            let identity_json: serde_json::Value = serde_json::from_reader(
+                std::fs::File::open(&id_path).unwrap()
+            ).unwrap();
+            
+            let identity = Identity::from_json(&identity_json).expect("Failed to load identity");
+
+            let (total, rolls) = roll_dice(&expression);
+
+            let mut key_bytes = [0u8; 32];
+            key_bytes.copy_from_slice(&identity.signing_key.to_bytes());
+            let signing_key = SigningKey::from_bytes(&key_bytes);
+
+            println!("Rolled {}: {} (individual: {:?})", expression, total, rolls);
+            println!("Note: Run 'conclave listen' in background to broadcast dice rolls to peers.");
         }
 
         Commands::Peers => {
@@ -446,13 +525,47 @@ async fn main() {
             println!("\nPress Ctrl+C to stop listening...\n");
 
             // Create and run NetworkManager
-            let manager = match NetworkManager::bind(&identity, cli.port).await {
+            let mut manager = match NetworkManager::bind(&identity, cli.port).await {
                 Ok(m) => m,
                 Err(e) => {
                     eprintln!("Failed to start network: {}", e);
                     return;
                 }
             };
+
+            // Set up event callback to process incoming events
+            let data_dir_clone = data_dir.clone();
+            manager.set_event_callback(move |event| {
+                println!("\n[EVENT RECEIVED] {} from campaign {}", event.event_type, event.campaign_id);
+                
+                let db_path = data_dir_clone.join(format!("{}.db", event.campaign_id));
+                if !db_path.exists() {
+                    eprintln!("Warning: Campaign DB not found for {}, ignoring event", event.campaign_id);
+                    return;
+                }
+
+                let conn = match conclave_storage::open_campaign_db(&db_path) {
+                    Ok(c) => c,
+                    Err(e) => {
+                        eprintln!("Failed to open campaign DB: {}", e);
+                        return;
+                    }
+                };
+
+                // Verify signature before storing
+                if !event.verify() {
+                    eprintln!("Warning: Failed to verify event {}, rejecting", event.id);
+                    return;
+                }
+
+                match conclave_storage::store_event(&conn, &event) {
+                    Ok(()) => println!("Stored event {} (seq {})", event.id, event.sequence_number),
+                    Err(e) => eprintln!("Failed to store event: {}", e),
+                }
+            });
+
+            // Set up campaign DB for serving sync requests
+            manager.set_campaign_db(CampaignDbHandle::new(data_dir.join("campaign.db")));
 
             println!("Listening on addresses:");
             for addr in manager.listening_addresses() {
@@ -538,10 +651,11 @@ async fn main() {
     }
 }
 
-fn roll_dice(expression: &str) -> i64 {
+fn roll_dice(expression: &str) -> (i64, Vec<i64>) {
     // Simple dice parser for MVP (e.g., "2d20+5")
     let parts: Vec<&str> = expression.split('+').collect();
     let mut total = 0;
+    let mut all_rolls = Vec::new();
 
     for part in parts {
         if part.contains('d') {
@@ -550,13 +664,16 @@ fn roll_dice(expression: &str) -> i64 {
                 let count: i64 = dims[0].parse().unwrap_or(1);
                 let sides: i64 = dims[1].parse().unwrap_or(20);
                 for _ in 0..count {
-                    total += (rand::random::<u32>() as i64 % sides) + 1;
+                    let roll = (rand::random::<u32>() as i64 % sides) + 1;
+                    total += roll;
+                    all_rolls.push(roll);
                 }
             }
         } else {
-            total += part.parse().unwrap_or(0);
+            let constant: i64 = part.parse().unwrap_or(0);
+            total += constant;
         }
     }
 
-    total
+    (total, all_rolls)
 }

@@ -1,4 +1,4 @@
-# Loremaster's Etude
+# Loremasters Etude
 
 **Level:** Focus 1 (Bard)  
 **Traditions:** Divination, Fortune  

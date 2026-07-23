@@ -1,7 +1,6 @@
-# ANT HAUL
+# Ant Haul
 
 ## Spell 1 - Transmutation
-
 **Traditions:** arcane, primal  
 **Cast:** [two-actions] somatic, verbal  
 **Range:** touch; **Targets:** 1 creature  

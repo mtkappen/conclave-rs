@@ -1,7 +1,6 @@
-# PRESTIDIGITATION
+# Prestidigitation
 
-## Cantrip - Evocation
-
+**Level:** Cantrip
 **Traditions:** arcane, divine, occult, primal  
 **Cast:** [two-actions] somatic, verbal  
 **Range:** 10 feet  
@@ -12,6 +11,7 @@ The simplest magic does your bidding. You can perform simple magical effects for
 
 - **Cook:** Cool, warm, or flavor 1 pound of nonliving material.
 - **Lift:** Slowly lift an unattended object of light Bulk or less 1 foot off the ground.
+
 - **Make:** Create a temporary object of negligible Bulk, made of congealed magical substance. The object looks crude and artificial and is extremely fragile—it can't be used as a tool, weapon, or spell component.
 - **Tidy:** Color, clean, or soil an object of light Bulk or less.
 

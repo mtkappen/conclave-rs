@@ -1,7 +1,6 @@
-# CONTROL WATER
+# Control Water
 
 ## Spell 5 - Evocation Water
-
 **Traditions:** arcane, primal  
 **Cast:** [two-actions] somatic, verbal  
 **Range:** 500 feet; **Area:** 50 feet long by 50 feet wide  

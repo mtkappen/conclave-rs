@@ -1,4 +1,4 @@
-# Touch of Idiocy
+# Touch Of Idiocy
 
 **Level:** 2  
 **Traditions:** Arcane, Occult  
@@ -9,5 +9,6 @@
 You dull the target's mind; the target must attempt a Will save.
 
 - **Success** The target is unaffected.
+
 - **Failure** The target is stupefied 2.
 - **Critical Failure** The target is stupefied 4.

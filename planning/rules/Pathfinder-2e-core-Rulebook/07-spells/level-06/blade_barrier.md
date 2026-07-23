@@ -1,7 +1,6 @@
-# BLADE BARRIER
+# Blade Barrier
 
 ## Spell 6 - Evocation Force
-
 **Traditions:** divine  
 **Cast:** [three-actions] material, somatic, verbal  
 **Range:** 120 feet  

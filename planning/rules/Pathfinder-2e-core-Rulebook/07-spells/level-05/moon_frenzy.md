@@ -11,6 +11,5 @@ A feral aspect overcomes the targets, making them tough and savage. Targets gain
 The targets can't use concentrate actions unless those actions also have the rage trait, with the exception of Seek. A creature can attempt to end the spell's effect on itself by using a single action, which has the rage trait, to attempt a Will save against your spell DC; on a success, it ends the spell's effect on itself.
 
 If a target is in the light of a full moon, it also grows by one size if it were Medium or Tiny. This increases the reach of a Medium or Tiny creature by 5 feet.
-
 **Heightened (6th)** The temporary Hit Points increase to 10, the silver weakness to 10, and the damage dealt by the attacks to three dice.  
 **Heightened (10th)** The temporary Hit Points increase to 20, the silver weakness to 20, and the damage dealt by the attacks to four dice.

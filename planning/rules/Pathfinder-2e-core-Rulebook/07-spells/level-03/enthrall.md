@@ -1,7 +1,6 @@
-# ENTHRALL
+# Enthrall
 
 ## Spell 3 - Auditory Enchantment Emotion
-
 **Traditions:** arcane, occult  
 **Cast:** [two-actions] somatic, verbal  
 **Range:** 120 feet; **Targets:** all creatures in range  
@@ -13,5 +12,6 @@ Each creature that comes within range has to attempt a save when you Sustain the
 
 - **Critical Success** The target is unaffected and notices that you tried to use magic.
 - **Success** The target needn't pay attention but doesn't notice you tried to use magic (it might notice others are enthralled).
+
 - **Failure** The target is fascinated with you. It can attempt another Will save if it witnesses actions or speech with which it disagrees. If it succeeds, it's no longer fascinated and is temporarily immune for 1 hour. If the target is subject to a hostile act, or if another creature succeeds at a Diplomacy or Intimidation check against it, the fascination ends immediately.
 - **Critical Failure** As failure, but the target can't attempt a save to end the fascination if it disagrees with you.

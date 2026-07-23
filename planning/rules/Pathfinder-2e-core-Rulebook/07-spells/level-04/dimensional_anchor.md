@@ -1,7 +1,6 @@
-# DIMENSIONAL ANCHOR
+# Dimensional Anchor
 
 ## Spell 4 - Abjuration
-
 **Traditions:** arcane, divine, occult  
 **Cast:** [two-actions] somatic, verbal  
 **Range:** 30 feet; **Targets:** 1 creature  
@@ -11,5 +10,6 @@ You interfere with the target's ability to teleport and travel between dimension
 
 - **Critical Success** The target is unaffected.
 - **Success** The effect's duration is 1 minute.
+
 - **Failure** The effect's duration is 10 minutes.
 - **Critical Failure** The effect's duration is 1 hour.

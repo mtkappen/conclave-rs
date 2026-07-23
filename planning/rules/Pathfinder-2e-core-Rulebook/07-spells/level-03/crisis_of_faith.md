@@ -1,7 +1,6 @@
-# CRISIS OF FAITH
+# Crisis Of Faith
 
 ## Spell 3 - Enchantment Mental
-
 **Traditions:** divine  
 **Cast:** [two-actions] somatic, verbal  
 **Range:** 30 feet; **Targets:** 1 creature  
@@ -11,9 +10,9 @@ You assault the target's faith, riddling the creature with doubt and mental turm
 
 - **Critical Success** The target is unaffected.
 - **Success** The target takes half damage.
+
 - **Failure** The target takes full damage; if the target can cast divine spells, it's stupefied 1 for 1 round.
 - **Critical Failure** The target takes double damage, is stupefied 1 for 1 round, and can't cast divine spells for 1 round.
 
 To many deities, casting this spell on a follower of your own deity without significant cause is anathema.
-
 **Heightened (+1):** The damage increases by 2d6 (or by 2d8 if the target is a divine spellcaster).

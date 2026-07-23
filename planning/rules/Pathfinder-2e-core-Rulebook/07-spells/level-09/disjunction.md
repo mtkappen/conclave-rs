@@ -1,7 +1,6 @@
-# DISJUNCTION
+# Disjunction
 
 ## Spell 9 - Uncommon Abjuration
-
 **Traditions:** arcane, primal  
 **Cast:** [two-actions] somatic, verbal  
 **Range:** 120 feet; **Targets:** 1 magic item  

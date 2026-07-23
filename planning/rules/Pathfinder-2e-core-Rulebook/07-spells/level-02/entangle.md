@@ -1,7 +1,6 @@
-# ENTANGLE
+# Entangle
 
 ## Spell 2 - Plant Transmutation
-
 **Traditions:** primal  
 **Cast:** [two-actions] somatic, verbal  
 **Range:** 120 feet; **Area:** all squares in a 20-foot-radius burst that contain plants  

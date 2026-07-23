@@ -1,7 +1,6 @@
-# CLAIRAUDIENCE
+# Clairaudience
 
 ## Spell 3 - Divination Scrying
-
 **Traditions:** arcane, occult  
 **Cast:** 1 minute (material, somatic, verbal)  
 **Range:** 500 feet  

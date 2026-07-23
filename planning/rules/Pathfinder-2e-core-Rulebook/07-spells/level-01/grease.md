@@ -1,7 +1,6 @@
-# GREASE
+# Grease
 
 ## Spell 1 - Conjuration
-
 **Traditions:** arcane, primal  
 **Cast:** [two-actions] somatic, verbal  
 **Range:** 30 feet; **Area:** 4 contiguous 5-foot squares or **Targets:** 1 object of 1 Bulk or less  

@@ -1,7 +1,6 @@
-# CREATE FOOD
+# Create Food
 
 ## Spell 2 - Conjuration
-
 **Traditions:** arcane, divine, primal  
 **Cast:** [two-actions] somatic, verbal  
 **Range:** touch; **Area:** 10-foot burst  

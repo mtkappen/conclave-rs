@@ -1,7 +1,6 @@
-# ECLIPSE BURST
+# Eclipse Burst
 
 ## Spell 7 - Cold Darkness Necromancy Negative
-
 **Traditions:** arcane, divine, primal  
 **Cast:** [two-actions] somatic, verbal  
 **Range:** 500 feet; **Area:** 60-foot burst  
@@ -13,7 +12,7 @@ If the globe overlaps with an area of magical light or affects a creature affect
 
 - **Critical Success** The creature or object is unaffected.
 - **Success** The creature or object takes half damage.
+
 - **Failure** The creature or object takes full damage.
 - **Critical Failure** The creature or object takes double damage. If it's a creature, it becomes blinded by the darkness for an unlimited duration.
-
 **Heightened (+1):** The cold damage increases by 1d10 and the negative damage against the living increases by 1d4.

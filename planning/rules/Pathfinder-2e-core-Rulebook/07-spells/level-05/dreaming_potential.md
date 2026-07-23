@@ -1,7 +1,6 @@
-# DREAMING POTENTIAL
+# Dreaming Potential
 
 ## Spell 5 - Enchantment Mental
-
 **Traditions:** occult  
 **Cast:** 10 minutes (material, somatic, verbal)  
 **Range:** touch; **Targets:** 1 willing sleeping creature  

@@ -1,7 +1,6 @@
-# BIND SOUL
+# Bind Soul
 
 ## Spell 9 - Uncommon Evil Necromancy
-
 **Traditions:** divine, occult  
 **Cast:** [two-actions] somatic, verbal; **Requirements:** black sapphire with a gp value of at least the target's level × 100  
 **Range:** 30 feet; **Targets:** 1 creature that died within the last minute  

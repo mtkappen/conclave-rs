@@ -1,7 +1,6 @@
-# GLIBNESS
+# Glibness
 
 ## Spell 4 - Uncommon Enchantment Mental
-
 **Traditions:** occult  
 **Cast:** [two-actions] somatic, verbal  
 **Duration:** 10 minutes  

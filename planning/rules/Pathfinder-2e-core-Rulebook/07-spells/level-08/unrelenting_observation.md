@@ -1,10 +1,10 @@
 # Unrelenting Observation
 
-**Spell Level** 8  
-**Traditions** Arcane, Occult  
-**Cast** [two-actions] somatic, verbal  
-**Range** 100 feet; **Area** 20-foot burst; **Targets** 1 creature or object tracked and up to 5 other willing creatures  
-**Duration** Varies  
+**Level:** 8  
+**Traditions:** Arcane, Occult  
+**Cast:** [two-actions] somatic, verbal  
+**Range:** 100 feet; **Area:** 20-foot burst; **Targets:** 1 creature or object tracked and up to 5 other willing creatures  
+**Duration:** Varies  
 
 This spell grants perfect sight based on scrying, allowing several willing targets to track the exact movements or position of one creature or object. Choose one target creature or object in the area to be tracked. It becomes the sensor for the spell. Up to five willing creatures of your choice in the area can see a ghostly image of this creature or object when it's out of their sight. They can perceive the creature or object perfectly, allowing them to ignore the concealed or invisible condition, though physical barriers still provide cover.
 
@@ -13,6 +13,8 @@ The tracking creatures can see the tracked creature or object through all barrie
 If the target to be tracked is willing, the duration is 1 hour. If you try to track an unwilling creature, the target must attempt a Will save.
 
 - **Critical Success** The creature or object is unaffected.
+
 - **Success** As described, and the duration is 1 minute.
 - **Failure** As described, and the duration is 1 hour.
+
 - **Critical Failure** As failure, but the duration is 1 day.

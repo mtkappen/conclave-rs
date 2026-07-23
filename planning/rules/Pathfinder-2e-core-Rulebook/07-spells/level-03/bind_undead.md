@@ -1,7 +1,6 @@
-# BIND UNDEAD
+# Bind Undead
 
 ## Spell 3 - Necromancy
-
 **Traditions:** arcane, divine, occult  
 **Cast:** [two-actions] somatic, verbal  
 **Range:** 30 feet; **Targets:** 1 mindless undead creature with a level no greater than bind undead's spell level  

@@ -1,4 +1,4 @@
-# Speak with Animals
+# Speak With Animals
 
 **Level:** 2  
 **Traditions:** Primal  

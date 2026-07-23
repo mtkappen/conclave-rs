@@ -1,9 +1,9 @@
 # Mislead
 
-**Spell Level** 6  
-**Traditions** Arcane, Occult  
-**Cast** [two-actions] somatic, verbal  
-**Duration** Sustained up to 1 minute  
+**Level:** 6  
+**Traditions:** Arcane, Occult  
+**Cast:** [two-actions] somatic, verbal  
+**Duration:** Sustained up to 1 minute  
 
 You turn yourself invisible and create an illusory duplicate of yourself. When you Sustain the Spell, you can mentally dictate a course of action for your duplicate to follow that round. Your duplicate acts as though it had your full number of actions, though it can't actually affect anything in the environment. Both the duplicate and your invisibility persist for the spell's duration. Performing a hostile action doesn't end mislead's invisibility, just like a 4th-level invisibility spell. A creature that determines the duplicate is an illusion doesn't necessarily know you're invisible, and one that can see your invisible form doesn't necessarily know your duplicate is an illusion.
 

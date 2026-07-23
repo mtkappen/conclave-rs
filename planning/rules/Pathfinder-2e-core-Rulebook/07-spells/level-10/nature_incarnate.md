@@ -9,11 +9,14 @@ The primal power of the world flows through you. You transform into an incarnati
 
 You gain the following statistics and abilities regardless of which battle form you choose:
 - AC = 25 + your level. Ignore your armor's check penalty and Speed reduction.
+
 - 30 temporary Hit Points.
 - Darkvision.
+
 - One or more attacks specific to the battle form you choose, which are the only attacks you can use. You're trained with them. Your attack modifier is +34, and you use the listed damage. These attacks are Strength based (for the purpose of the enfeebled condition, for example). If your unarmed attack modifier is higher, you can use it instead.
 - Athletics modifier of +36, unless your own modifier is higher.
 
 You also gain specific abilities based on the type of incarnation you choose:
+
 - **Green Man** Speed 40 feet, climb Speed 40 feet; Melee [one-action] vines (reach 30 feet, versatile P), Damage 6d8+12 bludgeoning; Ranged [one-action] thorns (range 100 feet), Damage 6d6+6 piercing; Green Caress (aura, primal, transmutation) 60 feet. Enemies other than plants are also must succeed at a Fortitude save against your spell DC or become clumsy 1 for 1 round (clumsy 2 on a critical failure).
 - **Kaiju** Speed 50 feet; resistance 5 to physical damage; Melee [one-action] jaws (reach 30 feet), Damage 6d10+10 piercing; Melee [one-action] claws (agile, reach 30 feet), Damage 6d8+8 slashing; Melee [one-action] foot (agile, reach 15 feet), Damage 6d6+10 bludgeoning; Unstoppable You are immune to being immobilized and ignore difficult terrain and greater difficult terrain; Trample [three-actions] You move up to double your Speed and move through the spaces of Huge or smaller creatures, trampling each creature whose space you enter. A trampled creature takes foot damage with a basic Reflex save against your spell DC.

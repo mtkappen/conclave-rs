@@ -11,5 +11,4 @@ You create a small extradimensional space that exists on the border between plan
 You can create an entrance by touching a solid surface within range and designating it as the portal. The entrance is invisible and undetectable unless you will it to be visible. Only creatures you designate can enter through the portal.
 
 The demiplane persists until dispelled or destroyed. Time passes normally inside the demiplane relative to the Material Plane.
-
 **Heightened (+1)** The size of the demiplane increases by 10 feet per side.

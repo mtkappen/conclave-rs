@@ -1,7 +1,6 @@
-# BREATH OF LIFE
+# Breath Of Life
 
 ## Spell 5 - Healing Necromancy Positive
-
 **Traditions:** divine  
 **Cast:** [reaction] verbal; **Trigger:** A living creature within range would die.  
 **Range:** 60 feet; **Targets:** the triggering creature  

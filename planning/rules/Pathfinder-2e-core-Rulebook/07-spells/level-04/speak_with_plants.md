@@ -1,4 +1,4 @@
-# Speak with Plants
+# Speak With Plants
 
 **Level:** 4  
 **Traditions:** Primal  

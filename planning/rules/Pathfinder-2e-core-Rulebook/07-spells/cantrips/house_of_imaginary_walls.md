@@ -1,4 +1,4 @@
-# House of Imaginary Walls
+# House Of Imaginary Walls
 
 **Level:** Cantrip (Bard Focus)  
 **Traditions:** Illusion, Visual  

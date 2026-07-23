@@ -1,7 +1,6 @@
-# GLYPH OF WARDING
+# Glyph Of Warding
 
 ## Spell 3 - Abjuration
-
 **Traditions:** arcane, divine, occult, primal  
 **Cast:** 10 minutes (material, somatic, verbal)  
 **Range:** touch; **Targets:** 1 container or a 10-foot-by-10-foot area  

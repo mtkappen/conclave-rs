@@ -1,7 +1,6 @@
-# GUIDANCE
+# Guidance
 
-## Cantrip - Divination
-
+**Level:** Cantrip
 **Traditions:** divine, occult, primal  
 **Cast:** [one-action] verbal  
 **Range:** 30 feet; **Targets:** 1 creature  

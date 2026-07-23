@@ -1,7 +1,6 @@
-# DIMENSIONAL LOCK
+# Dimensional Lock
 
 ## Spell 7 - Uncommon Abjuration
-
 **Traditions:** arcane, divine, occult  
 **Cast:** [two-actions] somatic, verbal  
 **Range:** 120 feet; **Area:** 60-foot burst  

@@ -1,7 +1,6 @@
-# BANE
+# Bane
 
 ## Spell 1 - Enchantment Mental
-
 **Traditions:** divine, occult  
 **Cast:** [two-actions] somatic, verbal  
 **Area:** 5-foot emanation; **Targets:** enemies in the area  

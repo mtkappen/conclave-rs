@@ -1,7 +1,6 @@
-# HYPNOTIC PATTERN
+# Hypnotic Pattern
 
 ## Spell 3 - Illusion Visual
-
 **Traditions:** arcane, occult  
 **Cast:** [two-actions] material, somatic  
 **Range:** 120 feet; **Area:** 10-foot burst  
@@ -11,4 +10,5 @@ You create a pattern of shifting colors that hovers in the air in a geometric cl
 
 - **Success** The target is unaffected.
 - **Failure** The target is fascinated by the pattern.
+
 - **Critical Failure** The target is fascinated by the pattern. While it remains fascinated, it can't use reactions.

@@ -1,7 +1,6 @@
-# FLEET STEP
+# Fleet Step
 
 ## Spell 1 - Transmutation
-
 **Traditions:** arcane, primal  
 **Cast:** [two-actions] somatic, verbal  
 **Duration:** 1 minute  

@@ -1,7 +1,6 @@
-# DIVINE WRATH
+# Divine Wrath
 
 ## Spell 4 - Evocation
-
 **Traditions:** divine  
 **Cast:** [two-actions] somatic, verbal  
 **Range:** 120 feet; **Area:** 20-foot burst  

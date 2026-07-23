@@ -11,5 +11,4 @@ You restore a dead creature to life, even if it has been dead for years or its b
 The target returns to life with full Hit Points and all abilities. Any conditions affecting the creature at death are removed. The target retains all memories and knowledge from before death.
 
 This spell can't resurrect creatures killed by disintegrate or a death effect, nor can it bring back undead or constructs.
-
 **Heightened (+1)** The cost increases by 2,500 gp per level increase.

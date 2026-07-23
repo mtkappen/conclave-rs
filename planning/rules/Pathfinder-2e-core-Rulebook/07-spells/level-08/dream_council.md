@@ -1,7 +1,6 @@
-# DREAM COUNCIL
+# Dream Council
 
 ## Spell 8 - Illusion Mental Sleep
-
 **Traditions:** arcane, occult  
 **Cast:** 10 minutes (somatic, verbal)  
 **Range:** planetary; **Targets:** up to 12 creatures you know by name and have met in person  

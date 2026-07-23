@@ -1,7 +1,6 @@
-# GASEOUS FORM
+# Gaseous Form
 
 ## Spell 4 - Polymorph Transmutation
-
 **Traditions:** arcane, occult, primal  
 **Cast:** [two-actions] somatic, verbal  
 **Range:** touch; **Targets:** 1 willing creature  

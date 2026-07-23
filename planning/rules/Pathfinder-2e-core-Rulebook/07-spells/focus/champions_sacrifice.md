@@ -1,4 +1,4 @@
-# Champion's Sacrifice
+# Champions Sacrifice
 
 **Level:** Focus 6 (Champion)  
 **Traditions:** Abjuration  

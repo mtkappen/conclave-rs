@@ -1,7 +1,6 @@
-# FREEDOM OF MOVEMENT
+# Freedom Of Movement
 
 ## Spell 4 - Abjuration
-
 **Traditions:** arcane, divine, primal  
 **Cast:** [two-actions] somatic, verbal  
 **Range:** touch; **Targets:** 1 creature touched  

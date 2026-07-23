@@ -1,7 +1,6 @@
-# ANIMAL VISION
+# Animal Vision
 
 ## Spell 3 - Divination Mental
-
 **Traditions:** primal  
 **Cast:** 1 minute (material, somatic, verbal)  
 **Range:** 120 feet; **Targets:** 1 animal  

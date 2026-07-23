@@ -1,7 +1,6 @@
-# AIR BUBBLE
+# Air Bubble
 
 ## Spell 1 - Air Conjuration
-
 **Traditions:** arcane, divine, primal  
 **Cast:** [reaction] verbal; **Trigger:** A creature within range enters an environment where it can't breathe.  
 **Range:** 60 feet  

@@ -1,7 +1,6 @@
-# CLOAK OF COLORS
+# Cloak Of Colors
 
 ## Spell 5 - Illusion Visual
-
 **Traditions:** arcane, occult  
 **Cast:** [two-actions] somatic, verbal  
 **Range:** 30 feet; **Targets:** 1 creature  

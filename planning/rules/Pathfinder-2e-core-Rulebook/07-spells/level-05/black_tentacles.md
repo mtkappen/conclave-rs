@@ -1,7 +1,6 @@
-# BLACK TENTACLES
+# Black Tentacles
 
 ## Spell 5 - Conjuration
-
 **Traditions:** arcane, occult  
 **Cast:** [three-actions] material, somatic, verbal  
 **Range:** 120 feet; **Area:** 20-foot burst adjacent to a flat surface  

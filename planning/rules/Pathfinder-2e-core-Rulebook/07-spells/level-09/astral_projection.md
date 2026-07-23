@@ -11,5 +11,4 @@ You and the targets project your consciousness onto the Astral Plane while your 
 While projected, you can travel anywhere on the Astral Plane and through color pools to other planes. You are immune to death effects and have resistance 10 to all damage. If your silver cord is severed (which is extremely rare), you die instantly.
 
 To return, you or an ally must use a free action to will yourself back to your body. Your projected form returns instantly, and you wake up in your physical body.
-
 **Heightened (+1)** You can target one additional creature.

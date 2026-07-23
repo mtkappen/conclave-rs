@@ -1,7 +1,6 @@
-# CREATE WATER
+# Create Water
 
 ## Spell 1 - Conjuration Water
-
 **Traditions:** arcane, divine, primal  
 **Cast:** [two-actions] somatic, verbal  
 **Range:** 0 feet  

@@ -1,7 +1,6 @@
-# DUPLICATE FOE
+# Duplicate Foe
 
 ## Spell 7 - Conjuration
-
 **Traditions:** arcane, occult  
 **Cast:** [three-actions] material, somatic, verbal  
 **Range:** 30 feet; **Targets:** 1 enemy of level 15 or lower  

@@ -1,7 +1,6 @@
-# EARTHQUAKE
+# Earthquake
 
 ## Spell 8 - Earth Evocation
-
 **Traditions:** arcane, primal  
 **Cast:** [two-actions] somatic, verbal  
 **Range:** 500 feet; **Area:** 60-foot burst  

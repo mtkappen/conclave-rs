@@ -1,7 +1,6 @@
-# DIVINE AURA
+# Divine Aura
 
 ## Spell 8 - Abjuration
-
 **Traditions:** divine  
 **Cast:** [two-actions] somatic, verbal  
 **Area:** 10-foot emanation; **Targets:** allies in the area  

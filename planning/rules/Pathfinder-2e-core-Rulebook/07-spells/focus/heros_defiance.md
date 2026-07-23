@@ -1,4 +1,4 @@
-# Hero's Defiance
+# Heros Defiance
 
 **Level:** Focus 10 (Champion)  
 **Traditions:** Healing, Necromancy, Positive  

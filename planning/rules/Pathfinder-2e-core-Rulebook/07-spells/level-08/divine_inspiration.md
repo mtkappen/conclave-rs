@@ -1,7 +1,6 @@
-# DIVINE INSPIRATION
+# Divine Inspiration
 
 ## Spell 8 - Enchantment Mental
-
 **Traditions:** divine  
 **Cast:** [two-actions] somatic, verbal  
 **Range:** touch; **Targets:** 1 willing creature  

@@ -1,4 +1,4 @@
-# Chapter 7: Spells
+# 01-overview
 
 ## Introduction
 
@@ -15,24 +15,28 @@ The fundamental building blocks of magic are the magical traditions and the scho
 All spells, all magic items, and most other magical effects fall into one of the eight schools of magic. These schools broadly define what the magic is capable of. Every spell has the trait corresponding to its school. Some spellcasters, like specialist wizards, have particular acumen with a certain school of magic.
 
 ### Abjuration
+
 Abjurations protect and ward. They create barriers that keep out attacks, effects, or even certain types of creatures. They also create effects that harm trespassers or banish interlopers.
 
 ### Conjuration
 Conjuration spells transport creatures via teleportation, create an object, or bring a creature or object from somewhere else (typically from another plane) to follow your commands. Conjuration spells often have the teleportation trait, and the creatures summoned by conjuration spells have the summoned trait.
 
 ### Divination
+
 Divinations allow you to learn the secrets of the present, past, and future. They bestow good fortune, grant you the ability to perceive remote locations, and reveal secret knowledge. Divinations often have the detection trait if they find something, the prediction trait if they grant you insight about what might happen in the future, the revelation trait if they show things as they truly are, or the scrying trait if they let you perceive another location.
 
 ### Enchantment
 Enchantments affect the minds and emotions of other creatures—sometimes to influence and control them, and other times to bolster them to greater heights of courage. Enchantment spells almost always have the mental trait, and many have the emotion trait or the fear trait.
 
 ### Evocation
+
 Evocations capture magical energy and then shape it to harm your foes or protect your allies. Evocation spells often have a trait that comes from the type of damage they deal, such as acid, cold, fire, force, or sonic.
 
 ### Illusion
 Illusions create the semblance of something real, fooling the eyes, ears, and other senses. They almost always have the mental trait, and depending on how the illusion is perceived, they might also have the auditory or visual trait.
 
 ### Necromancy
+
 Necromancy spells harness the power of life and death. They can sap life essence or sustain creatures with life-saving healing. Necromancy spells often have the curse, death, healing, negative, or positive traits.
 
 ### Transmutation
@@ -41,7 +45,6 @@ Transmutation spells make alterations to or transform the physical form of a cre
 ## Spell Attack Roll and Spell DC
 
 Many spells allow creatures to defend themselves using either their AC or a saving throw. Two statistics govern how potent your spells are against these defenses: your spell attack roll and your spell DC. When recording these on your character sheet, add together only the numbers that always apply—usually just your ability modifier and proficiency bonus.
-
 **Spell attack roll** = your spellcasting ability modifier + proficiency bonus + other bonuses + penalties  
 **Spell DC** = 10 + your spellcasting ability modifier + proficiency bonus + other bonuses + penalties
 
@@ -59,12 +62,14 @@ Spellcasters cast spells from one of four different spell lists, each representi
 Some types of magic, such as that of most magic items, don't belong to any single tradition. These have the magical trait instead of a tradition trait.
 
 ### Arcane
+
 Arcane spellcasters use logic and rationality to categorize the magic inherent in the world around them. Because of its far-reaching approach, the arcane tradition has the broadest spell list, though it's generally poor at affecting the spirit or the soul. Wizards are the most iconic arcane spellcasters, poring over tomes and grimoires, though arcane sorcerers study the secrets of their blood to unlock power within themselves.
 
 ### Divine
 The power of the divine is steeped in faith, the belief in a power source from beyond the Material Plane. Clerics are the most iconic divine spellcasters, beseeching the gods to grant them their magic. Divine sorcerers can use the blood of their celestial or fiendish ancestors as a divine conduit, and champions call upon their gods to grant them martial prowess through divine guidance.
 
 ### Occult
+
 The practitioners of occult traditions seek to understand the unexplainable, categorize the bizarre, and otherwise access the ephemeral in a systematic way. Bards are the most iconic occult spellcasters, collecting strange esoterica and using their performances to influence the mind or elevate the soul, and occult sorcerers strive to understand the mysterious power in their blood.
 
 ### Primal
@@ -75,6 +80,7 @@ An instinctual connection and faith in the world, the cycle of day and night, th
 Characters of spellcasting classes can cast a certain number of spells each day; the spells you can cast in a day are referred to as spell slots. At 1st level, a character has only a small number of 1st-level spell slots per day, but as you advance in level, you gain more spell slots and new slots for higher-level spells. A spell's level indicates its overall power, from 1 to 10.
 
 ### Prepared Spells
+
 If you're a prepared spellcaster—such as a cleric, druid, or wizard—you must spend time each day preparing spells for that day. At the start of your daily preparations, you select a number of spells of different spell levels determined by your character level and class. Your spells remain prepared until you cast them or until you prepare spells again. Each prepared spell is expended after a single casting, so if you want to cast a particular spell more than once in a day, you need to prepare that spell multiple times. The exceptions to this rule are spells with the cantrip trait; once you prepare a cantrip, you can cast it as many times as you want until the next time you prepare spells.
 
 You might gain an ability that allows you to swap prepared spells or perform other aspects of preparing spells at different times throughout the day, but only your daily preparation counts for the purpose of effects that last until the next time you prepare spells.
@@ -91,6 +97,7 @@ In addition, many spells have additional specific benefits when they are heighte
 Other heightened entries give a number after a plus sign, indicating that heightening grants extra advantages over multiple levels. The listed effect applies for every increment of levels by which the spell is heightened above its lowest spell level, and the benefit is cumulative. For example, fireball says "Heightened (+1) The damage increases by 2d6." Because fireball deals 6d6 fire damage at 3rd level, a 4th-level fireball would deal 8d6 fire damage, a 5th-level spell would deal 10d6 fire damage, and so on.
 
 ### Heightened Spontaneous Spells
+
 If you're a spontaneous spellcaster, you must know a spell at the specific level that you want to cast it in order to heighten it. You can add a spell to your spell repertoire at more than a single level so that you have more options when casting it. For example, if you added fireball to your repertoire as a 3rd-level spell and again as a 5th-level spell, you could cast it as a 3rd-level or a 5th-level spell; however, you couldn't cast it as a 4th-level spell.
 
 Many spontaneous spellcasting classes provide abilities like the signature spells class feature, which allows you to cast a limited number of spells as heightened versions even if you know the spell at only a single level.
@@ -101,6 +108,7 @@ Spells that affect certain physical or metaphysical forces tend to be grouped in
 
 | Matter | Spirit | Mind | Life |
 |--------|--------|------|------|
+
 | Also called body, material essence, or physical essence, matter is the fundamental building block that makes up all physical things in the universe. The arcane and primal traditions are especially attuned to matter. | Also called soul, ethereal or spiritual essence, spirit is an essence that makes up a being's immaterial and immortal self. The spirit travels through the Ethereal Plane and into the Great Beyond. | Also called thought or astral essence, the mind allows thinking creatures to have rational thoughts, ideas, plans, logic, and memories. Mind touches even nonsapient creatures like animals, though in a more limited capacity. | Also called heart, faith, instinct, or vital essence, life represents the animating universal force within all things. Whereas matter provides the base materials for a body, life keeps it alive and well. This essence is responsible for health, healing, death, and undeath. The divine tradition is especially attuned to spirit and life, while the occult tradition focuses on mind and spirit. |
 
 The following entries discuss each essence and the traditions and spell schools relevant to it; for instance, evocation spells tend to manipulate matter. The abjuration school is an unusual case, as abjuration spells draw upon different essences depending on who they are warding and what they are protecting against.

@@ -8,7 +8,6 @@
 **Save:** Will; **Duration:** until full tribute is paid  
 
 You surround yourself with supernatural splendor, appearing to be a god or similarly majestic being. You choose the aspects of your new majestic appearance. This causes the targets to pay tribute to you by bowing or using some other action in keeping with your appearance. The number of times a target must do this depends on the result of their Will save.
-
 **Critical Success** The target is unaffected.  
 **Success** The target must pay tribute twice.  
 **Failure** The target must pay tribute six times.  

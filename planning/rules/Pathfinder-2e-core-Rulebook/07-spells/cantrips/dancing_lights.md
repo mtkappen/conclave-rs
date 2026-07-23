@@ -1,7 +1,6 @@
-# DANCING LIGHTS
+# Dancing Lights
 
-## Cantrip - Evocation Light
-
+**Level:** Cantrip
 **Traditions:** arcane, occult, primal  
 **Cast:** [two-actions] somatic, verbal  
 **Range:** 120 feet  

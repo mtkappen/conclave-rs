@@ -1,7 +1,6 @@
-# ILLUSORY CREATURE
+# Illusory Creature
 
 ## Spell 2 - Auditory Illusion Visual
-
 **Traditions:** arcane, occult  
 **Cast:** [two-actions] somatic, verbal  
 **Range:** 500 feet  

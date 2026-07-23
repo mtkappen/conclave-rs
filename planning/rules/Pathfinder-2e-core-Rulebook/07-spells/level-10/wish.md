@@ -9,6 +9,7 @@ You state a wish, making your greatest desire come true. A wish spell can produc
 
 - Duplicate any arcane spell of 9th level or lower.
 - Duplicate any non-arcane spell of 7th level or lower.
+
 - Produce any effect whose power level is in line with the above effects.
 - Reverse certain effects that refer to the wish spell.
 

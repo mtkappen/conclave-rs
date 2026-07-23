@@ -1,7 +1,6 @@
-# ANIMAL MESSENGER
+# Animal Messenger
 
 ## Spell 2 - Enchantment Mental
-
 **Traditions:** primal  
 **Cast:** 1 minute (material, somatic, verbal)  
 **Range:** 120 feet  

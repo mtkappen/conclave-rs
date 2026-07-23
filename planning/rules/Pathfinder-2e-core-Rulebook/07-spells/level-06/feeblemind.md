@@ -1,7 +1,6 @@
-# FEEBLEMIND
+# Feeblemind
 
 ## Spell 6 - Curse Enchantment Incapacitation Mental
-
 **Traditions:** arcane, occult  
 **Cast:** [two-actions] somatic, verbal  
 **Range:** 30 feet; **Targets:** 1 creature  
@@ -11,5 +10,6 @@ You drastically reduce the target's mental faculties. The target must attempt a 
 
 - **Critical Success** The target is unaffected.
 - **Success** The target is stupefied 2 for 1 round.
+
 - **Failure** The target is stupefied 4 with an unlimited duration.
 - **Critical Failure** The target's intellect is permanently reduced below that of an animal, and it treats its Charisma, Intelligence, and Wisdom modifiers as –5. It loses all class abilities that require mental faculties, including all spellcasting. If the target is a PC, they become an NPC under the GM's control.

@@ -1,7 +1,6 @@
-# GATE
+# Gate
 
 ## Spell 10 - Uncommon Conjuration Teleportation
-
 **Traditions:** arcane, divine, occult  
 **Cast:** [two-actions] somatic, verbal  
 **Range:** 120 feet  

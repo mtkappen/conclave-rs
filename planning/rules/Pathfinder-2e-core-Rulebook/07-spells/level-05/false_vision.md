@@ -1,7 +1,6 @@
-# FALSE VISION
+# False Vision
 
 ## Spell 5 - Uncommon Illusion
-
 **Traditions:** arcane, occult  
 **Cast:** [two-actions] somatic, verbal  
 **Range:** touch; **Targets:** 1 object or location  

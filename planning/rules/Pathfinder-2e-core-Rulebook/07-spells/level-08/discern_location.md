@@ -1,7 +1,6 @@
-# DISCERN LOCATION
+# Discern Location
 
 ## Spell 8 - Uncommon Detection Divination
-
 **Traditions:** arcane, divine, occult  
 **Cast:** 10 minutes (material, somatic, verbal)  
 **Range:** unlimited; **Targets:** 1 creature or object  

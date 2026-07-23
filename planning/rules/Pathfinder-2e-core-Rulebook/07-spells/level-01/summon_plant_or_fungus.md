@@ -1,4 +1,4 @@
-# Summon Plant or Fungus
+# Summon Plant Or Fungus
 
 **Level:** 1  
 **Traditions:** Primal, Conjuration  

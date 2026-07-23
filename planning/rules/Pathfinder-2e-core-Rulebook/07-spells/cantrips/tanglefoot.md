@@ -9,7 +9,7 @@ A vine covered in sticky sap appears from thin air, flicking from your hand and 
 
 - **Critical Success** The target gains the immobilized condition and takes a -10-foot circumstance penalty to its Speeds for 1 round. It can attempt to Escape against your spell DC to remove the penalty and the immobilized condition.
 - **Success** The target takes a -10-foot circumstance penalty to its Speeds for 1 round. It can attempt to Escape against your spell DC to remove the penalty.
-- **Failure** The target is unaffected.
 
+- **Failure** The target is unaffected.
 **Heightened (2nd)** The effects last for 2 rounds.  
 **Heightened (4th)** The effects last for 1 minute.

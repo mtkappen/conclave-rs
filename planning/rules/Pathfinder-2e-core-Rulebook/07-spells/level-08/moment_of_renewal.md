@@ -1,4 +1,4 @@
-# Moment of Renewal
+# Moment Of Renewal
 
 **Level:** 8  
 **Traits:** Healing, Necromancy  

@@ -11,6 +11,8 @@ Choose a single statement you want the targets to believe. The fact could be nar
 The effect of the spell depends on the targets' Will saves. If a target is already subject to fabricated truth, your spell tries to counteract it. If the counteract check fails, the outcome of the target's saving throw can't be worse than a success.
 
 - **Critical Success** The target doesn't believe the statement, and it knows you tried to trick it.
+
 - **Success** The target doesn't believe the statement or realize you tried to trick it.
 - **Failure** The target believes the statement for a duration of 1 week.
+
 - **Critical Failure** The target believes the statement with unlimited duration.

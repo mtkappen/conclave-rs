@@ -1,4 +1,4 @@
-# Ray of Frost
+# Ray Of Frost
 
 **Level:** Cantrip  
 **Traditions:** Arcane, Primal  
@@ -9,5 +9,4 @@ You blast an icy ray. Make a spell attack roll. The ray deals cold damage equal 
 
 - **Critical Success** The target takes double damage and takes a -10-foot status penalty to its Speeds for 1 round.
 - **Success** The target takes normal damage.
-
 **Heightened (+1)** The damage increases by 1d4.

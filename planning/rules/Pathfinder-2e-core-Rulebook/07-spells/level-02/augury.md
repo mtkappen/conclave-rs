@@ -1,7 +1,6 @@
-# AUGURY
+# Augury
 
 ## Spell 2 - Divination Prediction
-
 **Traditions:** divine, occult  
 **Cast:** 10 minutes (material, somatic, verbal)  
 
@@ -9,6 +8,7 @@ You gain a vague glimpse of the future. During the casting of this spell, ask ab
 
 - **Weal** The results will be good.
 - **Woe** The results will be bad.
+
 - **Weal and Woe** The results will be a mix of good and bad.
 - **Nothing** There won't be particularly good or bad results.
 

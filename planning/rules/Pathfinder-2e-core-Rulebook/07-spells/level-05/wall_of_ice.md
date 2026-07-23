@@ -1,13 +1,9 @@
-# Wall of Ice Spell 5
+# Wall Of Ice
 
 **Cold Evocation Water**
-
 **Traditions:** arcane, primal
-
 **Cast:** [three-actions] material, somatic, verbal
-
 **Range:** 120 feet
-
 **Duration:** 1 minute
 
 You sculpt a barrier of ice that blocks sight and, once shattered, freezes foes. You create either a 1-foot-thick wall of ice in a straight line up to 60 feet long and 10 feet high (the wall doesn't have to be vertical, but it must be anchored on both sides to a solid surface) or a 1-foot-thick, 10-foot radius hemisphere of ice. The ice that makes up the wall is opaque. If you wish, the wall can be of a smaller length, height, or radius. You must create the wall in an unbroken open space so its edges don't pass through any creatures or objects, or the spell is lost.

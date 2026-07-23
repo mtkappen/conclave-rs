@@ -1,7 +1,6 @@
-# CHARM
+# Charm
 
 ## Spell 1 - Emotion Enchantment Incapacitation Mental
-
 **Traditions:** arcane, occult, primal  
 **Cast:** [two-actions] somatic, verbal  
 **Range:** 30 feet; **Targets:** 1 creature  

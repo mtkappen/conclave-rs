@@ -1,4 +1,4 @@
-# Dirge of Doom
+# Dirge Of Doom
 
 **Level:** Cantrip (Bard Focus)  
 **Traditions:** Emotion, Enchantment, Fear, Mental  

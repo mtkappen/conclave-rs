@@ -9,6 +9,7 @@ You request aid directly from your divine source. Your divine source always refu
 
 - Duplicate any divine spell of 9th level or lower.
 - Duplicate any non-divine spell of 7th level or lower.
+
 - Produce any effect whose power level is in line with the above effects.
 - Reverse certain effects that refer to the wish spell.
 

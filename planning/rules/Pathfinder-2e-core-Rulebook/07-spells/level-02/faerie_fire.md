@@ -1,7 +1,6 @@
-# FAERIE FIRE
+# Faerie Fire
 
 ## Spell 2 - Evocation Light
-
 **Traditions:** divine, occult, primal  
 **Cast:** [two-actions] somatic, verbal  
 **Range:** 120 feet; **Area:** 10-foot burst  

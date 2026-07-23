@@ -1,7 +1,6 @@
-# HYPERCOGNITION
+# Hypercognition
 
 ## Spell 3 - Divination
-
 **Traditions:** occult  
 **Cast:** [one-action] verbal  
 

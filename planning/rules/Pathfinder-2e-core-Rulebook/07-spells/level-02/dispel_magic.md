@@ -1,7 +1,6 @@
-# DISPEL MAGIC
+# Dispel Magic
 
 ## Spell 2 - Abjuration
-
 **Traditions:** arcane, divine, occult, primal  
 **Cast:** [two-actions] somatic, verbal  
 **Range:** 120 feet; **Targets:** 1 spell effect or unattended magic item  

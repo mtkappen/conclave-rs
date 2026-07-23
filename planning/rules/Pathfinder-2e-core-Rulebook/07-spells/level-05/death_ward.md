@@ -1,7 +1,6 @@
-# DEATH WARD
+# Death Ward
 
 ## Spell 5 - Abjuration
-
 **Traditions:** divine, occult, primal  
 **Cast:** [two-actions] somatic, verbal  
 **Range:** touch; **Targets:** 1 living creature touched  

@@ -1,7 +1,6 @@
-# GHOSTLY WEAPON
+# Ghostly Weapon
 
 ## Spell 3 - Transmutation
-
 **Traditions:** arcane, occult  
 **Cast:** [two-actions] somatic, verbal  
 **Range:** touch; **Targets:** 1 non-magical weapon that is either unattended or wielded by you or a willing ally  

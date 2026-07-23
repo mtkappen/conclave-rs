@@ -1,7 +1,6 @@
-# FIRE SEEDS
+# Fire Seeds
 
 ## Spell 6 - Evocation Fire Plant
-
 **Traditions:** primal  
 **Cast:** [two-actions] somatic, verbal  
 **Saving Throw:** basic Reflex; **Duration:** 1 minute  
@@ -11,6 +10,5 @@ Four acorns grow in your hand, their shells streaked with pulsing red and orange
 Flames continue to burn on the ground in the burst for 1 minute, dealing 2d6 fire damage to any creature that enters the flames or ends its turn within them. A creature can take damage from the continuing flames only once per round, even if it's in overlapping areas of fire created by different acorns.
 
 When the spell ends, any remaining acorns rot and turn to ordinary soil.
-
 **Heightened (8th):** The burst's damage increases to 5d6, and the continuing flames damage increases to 3d6.  
 **Heightened (9th):** The burst's damage increases to 6d6, and the continuing flames damage increases to 3d6.

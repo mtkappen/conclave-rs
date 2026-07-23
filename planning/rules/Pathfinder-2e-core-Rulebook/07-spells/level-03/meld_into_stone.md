@@ -1,4 +1,4 @@
-# Meld into Stone
+# Meld Into Stone
 
 **Level:** 3  
 **Traits:** Earth, Transmutation  

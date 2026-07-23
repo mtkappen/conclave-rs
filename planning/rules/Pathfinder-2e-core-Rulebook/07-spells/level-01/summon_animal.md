@@ -9,7 +9,6 @@
 You conjure an animal to fight for you. You summon a common creature that has the animal trait and whose level is -1.
 
 Heightening the spell increases the maximum level of creature you can summon.
-
 **Heightened (2nd)** Level 1.  
 **Heightened (3rd)** Level 2.  
 **Heightened (4th)** Level 3.  

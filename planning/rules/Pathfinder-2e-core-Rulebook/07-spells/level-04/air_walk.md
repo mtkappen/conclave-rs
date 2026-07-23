@@ -1,7 +1,6 @@
-# AIR WALK
+# Air Walk
 
 ## Spell 4 - Air Transmutation
-
 **Traditions:** divine, primal  
 **Cast:** [two-actions] somatic, verbal  
 **Range:** touch; **Targets:** 1 creature  

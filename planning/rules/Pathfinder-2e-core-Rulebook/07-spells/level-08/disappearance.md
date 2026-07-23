@@ -1,7 +1,6 @@
-# DISAPPEARANCE
+# Disappearance
 
 ## Spell 8 - Illusion
-
 **Traditions:** arcane, occult  
 **Cast:** [two-actions] material, somatic, verbal  
 **Range:** touch; **Targets:** 1 creature  

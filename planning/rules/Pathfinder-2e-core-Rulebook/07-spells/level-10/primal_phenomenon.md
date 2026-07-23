@@ -9,6 +9,7 @@ You request a direct intercession from the natural world. Nature always refuses 
 
 - Duplicate any primal spell of 9th level or lower.
 - Duplicate any non-primal spell of 7th level or lower.
+
 - Produce any effect whose power level is in line with the above effects.
 - Reverse certain effects that refer to the wish spell.
 

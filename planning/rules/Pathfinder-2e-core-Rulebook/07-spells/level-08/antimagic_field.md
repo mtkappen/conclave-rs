@@ -1,7 +1,6 @@
-# ANTIMAGIC FIELD
+# Antimagic Field
 
 ## Spell 8 - Rare Abjuration
-
 **Traditions:** arcane, divine, occult  
 **Cast:** [three-actions] material, somatic, verbal  
 **Area:** 10-foot emanation  

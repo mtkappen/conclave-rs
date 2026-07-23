@@ -1,7 +1,6 @@
-# ETHEREAL JAUNT
+# Ethereal Jaunt
 
 ## Spell 7 - Uncommon Conjuration Teleportation
-
 **Traditions:** divine, occult  
 **Cast:** [two-actions] somatic, verbal  
 **Duration:** sustained up to 1 minute  
@@ -13,5 +12,4 @@ You can see onto the Material Plane within a radius of 60 feet; it is gray, hazy
 When the spell ends, you return to the Material Plane. If you're in the air, you fall (unless you can fly), and if you're inside an object, you're pushed into the nearest open space and take 1d6 damage per 5 feet you were pushed.
 
 If you cast this spell when not on the Material Plane, it is lost.
-
 **Heightened (9th):** You can target up to five additional willing creatures at a range of 30 feet. The duration is up to 10 minutes.

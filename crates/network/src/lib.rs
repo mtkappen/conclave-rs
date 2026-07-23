@@ -277,6 +277,11 @@ impl NetworkManager {
     pub fn connected_peers(&self) -> Vec<PeerId> {
         self.connected_peers.iter().copied().collect()
     }
+
+    /// Get listening addresses
+    pub fn listening_addresses(&self) -> Vec<Multiaddr> {
+        self.swarm.listeners().cloned().collect()
+    }
 }
 
 /// Convert conclave-core Identity to libp2p Keypair

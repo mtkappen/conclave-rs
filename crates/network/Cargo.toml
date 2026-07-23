@@ -31,9 +31,9 @@ bytes = "1.5"
 tracing = "0.1"
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
+uuid = { workspace = true }
 
 [dev-dependencies]
-uuid = { workspace = true }
 tempfile = "3.0"
 conclave-storage = { path = "../storage" }
 ed25519-dalek = { workspace = true }

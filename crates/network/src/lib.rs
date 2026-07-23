@@ -14,12 +14,18 @@ use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use tokio::sync::{mpsc, oneshot};
 use tracing::{debug, error, info, warn};
+use uuid::Uuid;
 
 pub type EventCallback = Arc<dyn Fn(SignedEvent) + Send + Sync>;
 
 struct PendingSyncRequest {
     campaign_id: CampaignId,
     response_tx: oneshot::Sender<NetResult<Vec<SignedEvent>>>,
+}
+
+struct PendingRpcRequest {
+    request_id: u64,
+    response_tx: oneshot::Sender<NetResult<serde_json::Value>>,
 }
 
 /// Database connection wrapper for serving sync requests
@@ -67,10 +73,25 @@ pub struct EventSyncResponse {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RpcRequest {
+    pub method: String,
+    pub params: serde_json::Value,
+    pub request_id: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RpcResponse {
+    pub request_id: u64,
+    pub result: Option<serde_json::Value>,
+    pub error: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum NetworkRequest {
     Sync(EventSyncRequest),
     Broadcast(SignedEvent),
+    Rpc(RpcRequest),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -78,6 +99,7 @@ pub enum NetworkRequest {
 pub enum NetworkResponse {
     Sync(EventSyncResponse),
     Ack,
+    Rpc(RpcResponse),
 }
 
 #[derive(Debug)]
@@ -160,6 +182,12 @@ pub enum NetworkCommand {
         to_peer: PeerId,
         response: oneshot::Sender<NetResult<Vec<SignedEvent>>>,
     },
+    RpcCall {
+        peer_id: PeerId,
+        method: String,
+        params: serde_json::Value,
+        response: oneshot::Sender<NetResult<serde_json::Value>>,
+    },
 }
 
 #[derive(Debug, Clone)]
@@ -206,6 +234,7 @@ pub struct NetworkManager {
     local_peer_id: PeerId,
     connected_peers: HashSet<PeerId>,
     pending_sync_requests: HashMap<OutboundRequestId, PendingSyncRequest>,
+    pending_rpc_requests: HashMap<u64, PendingRpcRequest>,
     campaign_db: Option<CampaignDbHandle>,
     event_callback: Option<EventCallback>,
 }
@@ -271,9 +300,29 @@ impl NetworkManager {
             local_peer_id,
             connected_peers: HashSet::new(),
             pending_sync_requests: HashMap::new(),
+            pending_rpc_requests: HashMap::new(),
             campaign_db: None,
             event_callback: None,
         })
+    }
+
+    /// Make an RPC call to a peer
+    pub async fn rpc_call(
+        &self,
+        peer_id: PeerId,
+        method: String,
+        params: serde_json::Value,
+    ) -> NetResult<serde_json::Value> {
+        let (tx, rx) = oneshot::channel();
+        
+        self.command_tx.send(NetworkCommand::RpcCall {
+            peer_id,
+            method,
+            params,
+            response: tx,
+        }).await.map_err(|_| NetworkError::ChannelClosed)?;
+        
+        rx.await.map_err(|_| NetworkError::ChannelClosed)?
     }
 
     /// Set callback for incoming events
@@ -378,6 +427,32 @@ impl NetworkManager {
                     response_tx: response,
                 });
             }
+            NetworkCommand::RpcCall { peer_id, method, params, response } => {
+                if !self.connected_peers.contains(&peer_id) {
+                    let _ = response.send(Err(NetworkError::ConnectionFailed("Not connected to peer".into())));
+                    return Ok(());
+                }
+
+                debug!("Making RPC call {} to {}", method, peer_id);
+                
+                static RPC_COUNTER: std::sync::LazyLock<std::sync::atomic::AtomicU64> = 
+                    std::sync::LazyLock::new(|| std::sync::atomic::AtomicU64::new(0));
+                
+                let request_id = RPC_COUNTER.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                
+                let request = NetworkRequest::Rpc(RpcRequest {
+                    method: method.clone(),
+                    params,
+                    request_id,
+                });
+
+                self.pending_rpc_requests.insert(request_id, PendingRpcRequest {
+                    request_id,
+                    response_tx: response,
+                });
+
+                self.swarm.behaviour_mut().event_sync.send_request(&peer_id, request);
+            }
         }
         Ok(())
     }
@@ -415,7 +490,6 @@ impl NetworkManager {
                                 let events = if let Some(db) = &self.campaign_db {
                                     match db.get_events(sync_req.campaign_id, sync_req.from_sequence) {
                                         Ok(evts) => {
-                                            // Filter to only return events from from_sequence onwards
                                             evts.into_iter()
                                                 .filter(|e| e.sequence_number >= sync_req.from_sequence)
                                                 .collect()
@@ -444,6 +518,74 @@ impl NetworkManager {
                                 let response = NetworkResponse::Ack;
                                 let _ = self.swarm.behaviour_mut().event_sync.send_response(channel, response);
                             }
+                            NetworkRequest::Rpc(rpc_req) => {
+                                debug!("Received RPC call {} from {}", rpc_req.method, peer);
+                                
+                                // Handle built-in RPC methods
+                                let result: Result<serde_json::Value, String> = match rpc_req.method.as_str() {
+                                    "get_members" => {
+                                        if let Some(campaign_id_str) = rpc_req.params.get("campaign_id").and_then(|v| v.as_str()) {
+                                            if let Ok(campaign_id) = campaign_id_str.parse::<Uuid>() {
+                                                if let Some(db) = &self.campaign_db {
+                                                    match conclave_storage::open_campaign_db(&db.path) {
+                                                        Ok(conn) => {
+                                                            match conclave_storage::get_members(&conn, campaign_id) {
+                                                                Ok(members) => Ok(serde_json::to_value(members).unwrap()),
+                                                                Err(e) => Err(format!("Query error: {}", e)),
+                                                            }
+                                                        }
+                                                        Err(e) => Err(format!("DB error: {}", e)),
+                                                    }
+                                                } else {
+                                                    Err("No database configured".into())
+                                                }
+                                            } else {
+                                                Err("Invalid campaign ID".into())
+                                            }
+                                        } else {
+                                            Err("Missing campaign_id parameter".into())
+                                        }
+                                    }
+                                    "get_max_sequence" => {
+                                        if let Some(campaign_id_str) = rpc_req.params.get("campaign_id").and_then(|v| v.as_str()) {
+                                            if let Ok(campaign_id) = campaign_id_str.parse::<Uuid>() {
+                                                if let Some(db) = &self.campaign_db {
+                                                    match db.get_max_sequence(campaign_id) {
+                                                        Ok(seq) => Ok(serde_json::json!({"sequence": seq})),
+                                                        Err(e) => Err(format!("Query error: {}", e)),
+                                                    }
+                                                } else {
+                                                    Err("No database configured".into())
+                                                }
+                                            } else {
+                                                Err("Invalid campaign ID".into())
+                                            }
+                                        } else {
+                                            Err("Missing campaign_id parameter".into())
+                                        }
+                                    }
+                                    _ => Err(format!("Unknown method: {}", rpc_req.method)),
+                                };
+
+                                match result {
+                                    Ok(val) => {
+                                        let rpc_resp = NetworkResponse::Rpc(RpcResponse {
+                                            request_id: rpc_req.request_id,
+                                            result: Some(val),
+                                            error: None,
+                                        });
+                                        let _ = self.swarm.behaviour_mut().event_sync.send_response(channel, rpc_resp);
+                                    }
+                                    Err(err) => {
+                                        let rpc_resp = NetworkResponse::Rpc(RpcResponse {
+                                            request_id: rpc_req.request_id,
+                                            result: None,
+                                            error: Some(err),
+                                        });
+                                        let _ = self.swarm.behaviour_mut().event_sync.send_response(channel, rpc_resp);
+                                    }
+                                }
+                            }
                         }
                     }
                     request_response::Message::Response { request_id, response } => {
@@ -462,6 +604,21 @@ impl NetworkManager {
                             }
                             NetworkResponse::Ack => {
                                 debug!("Received ack for broadcast event");
+                            }
+                            NetworkResponse::Rpc(rpc_resp) => {
+                                debug!("Received RPC response for request {}", rpc_resp.request_id);
+                                
+                                if let Some(pending) = self.pending_rpc_requests.remove(&rpc_resp.request_id) {
+                                    match rpc_resp.result {
+                                        Some(result) => {
+                                            let _ = pending.response_tx.send(Ok(result));
+                                        }
+                                        None => {
+                                            let err = rpc_resp.error.unwrap_or_else(|| "RPC error".into());
+                                            let _ = pending.response_tx.send(Err(NetworkError::ConnectionFailed(err)));
+                                        }
+                                    }
+                                }
                             }
                         }
                     }

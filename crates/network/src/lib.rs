@@ -6,11 +6,15 @@ use conclave_core::Identity;
 use conclave_protocol::SignedEvent;
 use futures::StreamExt;
 use libp2p::identity::{ed25519, Keypair};
+use libp2p::request_response::{self, ProtocolSupport};
 use libp2p::swarm::SwarmEvent;
 use libp2p::{identify, mdns, ping, Multiaddr, PeerId};
 use std::collections::HashSet;
 use tokio::sync::{mpsc, oneshot};
 use tracing::{debug, error, info, warn};
+
+/// Protocol ID for event broadcast/request-response
+const CONCLAVE_EVENT_PROTOCOL: &str = "/conclave/event/1.0.0";
 
 #[derive(Debug)]
 pub enum NetworkError {
@@ -87,6 +91,7 @@ struct ConclaveBehaviour {
     identify: identify::Behaviour,
     ping: ping::Behaviour,
     mdns: mdns::tokio::Behaviour,
+    event_sync: request_response::json::Behaviour<SignedEvent, Vec<u8>>,
 }
 
 /// Peer connection handle for sending events
@@ -113,7 +118,6 @@ impl PeerHandle {
 pub struct NetworkManager {
     swarm: libp2p::Swarm<ConclaveBehaviour>,
     command_rx: mpsc::Receiver<NetworkCommand>,
-    event_tx: mpsc::Sender<NetworkEvent>,
     local_peer_id: PeerId,
     connected_peers: HashSet<PeerId>,
 }
@@ -148,6 +152,10 @@ impl NetworkManager {
                     )),
                     ping: ping::Behaviour::default(),
                     mdns: mdns::tokio::Behaviour::new(mdns::Config::default(), local_peer_id)?,
+                    event_sync: request_response::json::Behaviour::<SignedEvent, Vec<u8>>::new(
+                        [(libp2p::StreamProtocol::new(CONCLAVE_EVENT_PROTOCOL), ProtocolSupport::Full)],
+                        request_response::Config::default(),
+                    ),
                 })
             })
             .map_err(|e| NetworkError::Libp2pError(format!("Behaviour setup failed: {}", e)))?
@@ -167,12 +175,10 @@ impl NetworkManager {
         info!("Listening on QUIC: {}", quic_addr);
 
         let (_command_tx, command_rx) = mpsc::channel(100);
-        let (event_tx, _) = mpsc::channel(100);
 
         Ok(NetworkManager {
             swarm,
             command_rx,
-            event_tx,
             local_peer_id,
             connected_peers: HashSet::new(),
         })
@@ -214,13 +220,27 @@ impl NetworkManager {
                     let _ = response.send(Err(NetworkError::ConnectionFailed("Not connected to peer".into())));
                 }
             }
-            NetworkCommand::Broadcast { event: _, response } => {
+            NetworkCommand::Broadcast { event, response } => {
                 debug!("Broadcasting event to {} peers", self.connected_peers.len());
+                
+                for peer_id in self.connected_peers.iter() {
+                    self.swarm.behaviour_mut().event_sync.send_request(peer_id, event.clone());
+                    info!("Sent broadcast event to {}", peer_id);
+                }
+                
                 let _ = response.send(Ok(()));
             }
-            NetworkCommand::SendToPeer { peer_id, event: _, response } => {
+            NetworkCommand::SendToPeer { peer_id, event, response } => {
+                if !self.connected_peers.contains(&peer_id) {
+                    let _ = response.send(Err(NetworkError::ConnectionFailed("Not connected to peer".into())));
+                    return Ok(());
+                }
+                
                 debug!("Sending event to peer: {}", peer_id);
-                let _ = response.send(Err(NetworkError::ConnectionFailed("Not implemented".into())));
+                self.swarm.behaviour_mut().event_sync.send_request(&peer_id, event);
+                info!("Sent event to {}", peer_id);
+                
+                let _ = response.send(Ok(()));
             }
             NetworkCommand::ListPeers { response } => {
                 let peers: Vec<PeerId> = self.connected_peers.iter().copied().collect();
@@ -256,10 +276,30 @@ impl NetworkManager {
                 debug!("Identified peer {}: protocols={:?}, addrs={:?}", 
                        peer_id, info.protocols, info.listen_addrs);
             }
-            SwarmEvent::OutgoingConnectionError { peer_id, error, .. } => {
-                if let Some(peer_id) = peer_id {
-                    warn!("Outgoing connection error to {}: {:?}", peer_id, error);
+            SwarmEvent::Behaviour(ConclaveBehaviourEvent::EventSync(message)) => match message {
+                request_response::Event::Message { peer, message } => match message {
+                    request_response::Message::Request { request, channel, .. } => {
+                        debug!("Received event from peer: {}", peer);
+                        info!("Received signed event {} from {}", request.id, peer);
+                        let _ = self.swarm.behaviour_mut().event_sync.send_response(channel, vec![]);
+                    }
+                    request_response::Message::Response { .. } => {
+                        debug!("Received response from peer");
+                    }
+                },
+                request_response::Event::InboundFailure { peer, error, .. } => {
+                    warn!("Inbound failure from peer {:?}: {:?}", peer, error);
                 }
+                request_response::Event::OutboundFailure { peer, error, .. } => {
+                    warn!("Outbound failure to peer {:?}: {:?}", peer, error);
+                }
+                _ => {}
+            },
+            SwarmEvent::OutgoingConnectionError { peer_id: Some(peer_id), error, .. } => {
+                warn!("Outgoing connection error to {}: {:?}", peer_id, error);
+            }
+            SwarmEvent::OutgoingConnectionError { peer_id: None, error, .. } => {
+                warn!("Outgoing connection error (no peer): {:?}", error);
             }
             SwarmEvent::IncomingConnectionError { local_addr, send_back_addr, error, .. } => {
                 warn!("Incoming connection error from {} (local: {}) : {:?}", send_back_addr, local_addr, error);

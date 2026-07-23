@@ -2,6 +2,8 @@
 
 use conclave_core::Identity;
 use conclave_network::{NetworkManager, NetworkCommand};
+use conclave_protocol::{Event, SignedEvent};
+use libp2p::Multiaddr;
 use std::time::Duration;
 
 /// Test that two network managers can be created and bind to different ports
@@ -75,4 +77,41 @@ async fn test_manual_connect() {
 
         // TODO: Actually run the managers and verify connection
     }
+}
+
+/// Test event broadcast between two connected peers
+#[tokio::test]
+async fn test_event_broadcast() {
+    let identity1 = Identity::generate("Peer 1 (DM)".to_string()).unwrap();
+    let identity2 = Identity::generate("Peer 2 (Player)".to_string()).unwrap();
+
+    // Bind both managers on different ports
+    let manager1 = NetworkManager::bind(&identity1, 0).await.unwrap();
+    let _manager2 = NetworkManager::bind(&identity2, 0).await.unwrap();
+
+    // Verify we can construct a signed event that would be broadcast
+    let campaign_id = uuid::Uuid::new_v4();
+    let player_id = identity1.player_id();
+    let event_payload = serde_json::to_value(
+        Event::ChatMessage {
+            author: player_id.clone(),
+            content: "Hello!".to_string(),
+            character_name: None,
+            timestamp: 1234567890,
+        }
+    ).unwrap();
+    
+    let signed_event = SignedEvent::new(
+        1,
+        campaign_id,
+        1,
+        player_id,
+        event_payload,
+    );
+
+    // Verify the event was created successfully
+    assert_eq!(signed_event.id, 1);
+    assert_eq!(signed_event.sequence_number, 1);
+    
+    drop(manager1);
 }

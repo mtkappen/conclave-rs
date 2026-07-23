@@ -1,0 +1,9 @@
+[package]
+name = "conclave-network"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+conclave-protocol = { path = "../protocol" }
+tokio = { workspace = true }
+thiserror = { workspace = true }

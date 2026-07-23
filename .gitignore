@@ -1,6 +1,11 @@
 target/
-planning/rules/*-Free-Version.md
+
+# Source rulebook files
 planning/rules/*.txt
-planning/rules/*_fixed.md
-planning/rules/*_preview.md
-planning/rules/*cleaned-full.txt
+planning/rules/dnd-5e-srd.md
+"planning/rules/Lancer - Free Version.md"
+
+# Intermediate working files
+*_fixed.md
+*_preview.md
+*cleaned-full.txt

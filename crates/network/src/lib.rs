@@ -25,6 +25,20 @@ pub enum NetworkError {
     Libp2pError(String),
 }
 
+impl std::fmt::Display for NetworkError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            NetworkError::ConnectionFailed(msg) => write!(f, "Connection failed: {}", msg),
+            NetworkError::IoError(e) => write!(f, "IO error: {}", e),
+            NetworkError::SerializationError(e) => write!(f, "Serialization error: {}", e),
+            NetworkError::ChannelClosed => write!(f, "Channel closed"),
+            NetworkError::Libp2pError(msg) => write!(f, "libp2p error: {}", msg),
+        }
+    }
+}
+
+impl std::error::Error for NetworkError {}
+
 impl From<std::io::Error> for NetworkError {
     fn from(err: std::io::Error) -> Self {
         NetworkError::IoError(err)

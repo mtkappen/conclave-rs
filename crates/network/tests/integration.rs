@@ -3,7 +3,6 @@
 use conclave_core::Identity;
 use conclave_network::{NetworkManager, NetworkCommand};
 use conclave_protocol::{Event, SignedEvent};
-use libp2p::Multiaddr;
 use std::time::Duration;
 
 /// Test that two network managers can be created and bind to different ports

@@ -5,7 +5,8 @@ edition.workspace = true
 
 [dependencies]
 conclave-protocol = { path = "../protocol" }
-serde = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
 ed25519-dalek = { workspace = true }
 bip39 = { workspace = true }
 sha2 = { workspace = true }

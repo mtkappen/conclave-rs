@@ -475,6 +475,7 @@ dependencies = [
  "conclave-protocol",
  "conclave-storage",
  "dirs",
+ "libp2p",
  "rand 0.8.7",
  "rusqlite",
  "serde_json",
@@ -492,6 +493,7 @@ dependencies = [
  "hex",
  "rand 0.8.7",
  "serde",
+ "serde_json",
  "sha2",
  "thiserror 2.0.19",
 ]

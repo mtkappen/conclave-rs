@@ -2,6 +2,7 @@
 
 use clap::{Parser, Subcommand};
 use conclave_core::Identity;
+use conclave_network::NetworkManager;
 use conclave_storage::open_campaign_db;
 
 #[derive(Parser)]
@@ -89,14 +90,11 @@ async fn main() {
             println!("Generating new identity...");
             let identity = Identity::generate(name).expect("Failed to generate identity");
             
-            // Save identity
+            // Save full identity with keys (in production, use encrypted storage)
             let id_path = data_dir.join("identity.json");
             serde_json::to_writer_pretty(
                 std::fs::File::create(&id_path).unwrap(),
-                &serde_json::json!({
-                    "player_id": identity.player_id(),
-                    "display_name": identity.display_name(),
-                })
+                &identity.to_json()
             ).unwrap();
 
             // Export mnemonic (in real app, show this ONCE and require confirmation)
@@ -114,12 +112,13 @@ async fn main() {
                 return;
             }
 
-            let identity: serde_json::Value = serde_json::from_reader(
+            let identity_json: serde_json::Value = serde_json::from_reader(
                 std::fs::File::open(id_path).unwrap()
             ).unwrap();
 
-            println!("Player ID: {}", identity["player_id"]);
-            println!("Display Name: {}", identity["display_name"]);
+            let identity = Identity::from_json(&identity_json).expect("Failed to load identity");
+            println!("Player ID: {}", identity.player_id());
+            println!("Display Name: {}", identity.display_name());
         }
 
         Commands::NewCampaign { name, rule_set } => {
@@ -129,11 +128,12 @@ async fn main() {
                 return;
             }
 
-            let identity: serde_json::Value = serde_json::from_reader(
+            let identity_json: serde_json::Value = serde_json::from_reader(
                 std::fs::File::open(id_path).unwrap()
             ).unwrap();
             
-            let player_id = identity["player_id"].as_str().unwrap();
+            let identity = Identity::from_json(&identity_json).expect("Failed to load identity");
+            let player_id = identity.player_id();
 
             // Create campaign database
             let campaign_id = uuid::Uuid::new_v4();
@@ -187,34 +187,65 @@ async fn main() {
         }
 
         Commands::Peers => {
-            println!("Network feature not yet active. Use 'conclave listen' to start networking.");
+            println!("Network not active. Run 'conclave listen' first.");
         }
 
         Commands::Connect { addr } => {
-            println!("Connecting to peer at {}...", addr);
-            // TODO: Implement actual connection using NetworkManager
-            println!("TODO: Parse address and dial peer");
-        }
-
-        Commands::Listen => {
-            println!("Starting network listener on port {}...", cli.port);
-            
             let id_path = data_dir.join("identity.json");
             if !id_path.exists() {
                 println!("Error: No identity found. Run 'conclave init' first.");
                 return;
             }
 
-            // Load identity for now (simplified - in production use proper key storage)
+            let _identity_json: serde_json::Value = serde_json::from_reader(
+                std::fs::File::open(&id_path).unwrap()
+            ).unwrap();
+            
+            println!("Connecting to {}...", addr);
+            // Note: Actual connection requires running NetworkManager loop
+            // This is a stub - full implementation needs persistent manager
+            println!("Note: Full peer connection requires 'conclave listen' to be running");
+        }
+
+        Commands::Listen => {
+            let id_path = data_dir.join("identity.json");
+            if !id_path.exists() {
+                println!("Error: No identity found. Run 'conclave init' first.");
+                return;
+            }
+
             let identity_json: serde_json::Value = serde_json::from_reader(
                 std::fs::File::open(&id_path).unwrap()
             ).unwrap();
             
-            println!("Player ID: {}", identity_json["player_id"]);
+            let identity = Identity::from_json(&identity_json).expect("Failed to load identity");
+            
+            println!("Starting network listener on port {}...", cli.port);
+            println!("Player ID: {}", identity.player_id());
             println!("\nPress Ctrl+C to stop listening...\n");
 
-            // TODO: Create and run NetworkManager
-            // This is a placeholder - actual implementation requires proper identity key loading
+            // Create and run NetworkManager
+            let manager = match NetworkManager::bind(&identity, cli.port).await {
+                Ok(m) => m,
+                Err(e) => {
+                    eprintln!("Failed to start network: {}", e);
+                    return;
+                }
+            };
+
+            println!("Listening on addresses:");
+            for addr in manager.listening_addresses() {
+                println!("  {}", addr);
+            }
+            println!();
+
+            // Spawn the manager loop and wait for Ctrl+C
+            tokio::spawn(async move {
+                if let Err(e) = manager.run().await {
+                    eprintln!("Network error: {}", e);
+                }
+            });
+
             tokio::signal::ctrl_c().await.unwrap();
             println!("\nShutting down...");
         }

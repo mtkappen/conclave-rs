@@ -19,6 +19,15 @@ pub enum CoreError {
 
     #[error("IO error: {0}")]
     IoError(#[from] std::io::Error),
+
+    #[error("Hex decode error: {0}")]
+    HexDecodeError(hex::FromHexError),
+}
+
+impl From<hex::FromHexError> for CoreError {
+    fn from(err: hex::FromHexError) -> Self {
+        CoreError::HexDecodeError(err)
+    }
 }
 
 pub type Result<T> = std::result::Result<T, CoreError>;
@@ -95,6 +104,33 @@ impl Identity {
     /// Get display name
     pub fn display_name(&self) -> &str {
         &self.display_name
+    }
+
+    /// Export identity to JSON (includes secret key - use secure storage!)
+    pub fn to_json(&self) -> serde_json::Value {
+        serde_json::json!({
+            "player_id": self.player_id(),
+            "display_name": self.display_name,
+            "signing_key_bytes": hex::encode(self.signing_key.to_bytes()),
+        })
+    }
+
+    /// Load identity from JSON
+    pub fn from_json(value: &serde_json::Value) -> Result<Self> {
+        let signing_key_bytes = hex::decode(value["signing_key_bytes"].as_str()
+            .ok_or(CoreError::IdentityGeneration("Missing signing_key_bytes".into()))?)?;
+        
+        let mut key_array = [0u8; 32];
+        key_array.copy_from_slice(&signing_key_bytes);
+        
+        let signing_key = SigningKey::from_bytes(&key_array);
+        let verifying_key = signing_key.verifying_key();
+        
+        Ok(Identity {
+            signing_key,
+            verifying_key,
+            display_name: value["display_name"].as_str().unwrap_or("Unknown").to_string(),
+        })
     }
 }
 
